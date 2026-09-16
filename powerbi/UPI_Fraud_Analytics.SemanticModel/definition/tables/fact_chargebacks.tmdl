@@ -1,0 +1,205 @@
+table fact_chargebacks
+	lineageTag: b6f3094f-43c3-4469-ae84-0fd33454db8b
+
+	column complaint_id
+		dataType: string
+		lineageTag: c22c5a51-3345-4ec7-9599-e37601e38d12
+		summarizeBy: none
+		sourceColumn: complaint_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column txn_id
+		dataType: string
+		lineageTag: 5298b6fb-0d44-4a68-919a-1f5786b1f326
+		summarizeBy: none
+		sourceColumn: txn_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column txn_id_valid_fk
+		dataType: boolean
+		lineageTag: 4e60ce56-ac34-480e-b229-c37fcfe3cfe2
+		summarizeBy: none
+		sourceColumn: txn_id_valid_fk
+
+		annotation SummarizationSetBy = Automatic
+
+	column user_id
+		dataType: string
+		lineageTag: 0be4b7d6-fdb8-4314-8d31-ac66e6e6b776
+		summarizeBy: none
+		sourceColumn: user_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column user_id_valid_fk
+		dataType: boolean
+		lineageTag: 0b5933ae-b4b1-4d47-bcf1-8ef275f21ab0
+		summarizeBy: none
+		sourceColumn: user_id_valid_fk
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_id
+		dataType: string
+		lineageTag: 5ef89eec-fe16-479b-9bed-1cdd440c3c5d
+		summarizeBy: none
+		sourceColumn: merchant_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_id_valid_fk
+		dataType: boolean
+		lineageTag: 07c4f19a-d5f9-4b99-a9dd-ae8976ab4349
+		summarizeBy: none
+		sourceColumn: merchant_id_valid_fk
+
+		annotation SummarizationSetBy = Automatic
+
+	column transaction_timestamp
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 7b5cfd46-7ebd-48bf-9ad1-49196b686031
+		summarizeBy: none
+		sourceColumn: transaction_timestamp
+
+		annotation SummarizationSetBy = Automatic
+
+	column reported_timestamp
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 51b46cb1-d066-4164-b644-ee101fc92ac3
+		summarizeBy: none
+		sourceColumn: reported_timestamp
+
+		annotation SummarizationSetBy = Automatic
+
+	column bank_response_timestamp
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 75e5b613-6596-4f80-a1c7-885f4869294f
+		summarizeBy: none
+		sourceColumn: bank_response_timestamp
+
+		annotation SummarizationSetBy = Automatic
+
+	column timestamps_logically_valid
+		dataType: boolean
+		lineageTag: b08c9cd4-9abf-422f-ba0b-7c497c23334c
+		summarizeBy: none
+		sourceColumn: timestamps_logically_valid
+
+		annotation SummarizationSetBy = Automatic
+
+	column reporting_delay_days
+		dataType: double
+		formatString: #,0.0
+		lineageTag: b36b4242-421e-4b18-9cbb-f18fc1605557
+		summarizeBy: average
+		sourceColumn: reporting_delay_days
+
+		annotation SummarizationSetBy = Automatic
+
+	column disputed_amount
+		dataType: double
+		formatString: ₹#,0.00
+		lineageTag: 2d3117e5-559e-44f7-87db-73ad9905aedb
+		summarizeBy: sum
+		sourceColumn: disputed_amount
+
+		annotation SummarizationSetBy = Automatic
+
+	column disputed_amount_was_negative
+		dataType: boolean
+		lineageTag: 931bb01b-53ea-40ac-a7ac-82816a93ebd6
+		summarizeBy: none
+		sourceColumn: disputed_amount_was_negative
+
+		annotation SummarizationSetBy = Automatic
+
+	column disputed_amount_missing
+		dataType: boolean
+		lineageTag: be7c0221-39a5-4f2c-9722-1f32a1b17d90
+		summarizeBy: none
+		sourceColumn: disputed_amount_missing
+
+		annotation SummarizationSetBy = Automatic
+
+	column reason_code
+		dataType: string
+		lineageTag: 71b1d606-69b2-405b-a115-4d58b417a0e6
+		summarizeBy: none
+		sourceColumn: reason_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column reason_code_raw
+		dataType: string
+		lineageTag: 6c2ee2a6-856e-404a-9945-499de2a21bee
+		summarizeBy: none
+		sourceColumn: reason_code_raw
+
+		annotation SummarizationSetBy = Automatic
+
+	column complaint_text
+		dataType: string
+		lineageTag: 27ce1a74-e5d3-4121-8a05-f585a0a192d4
+		summarizeBy: none
+		sourceColumn: complaint_text
+
+		annotation SummarizationSetBy = Automatic
+
+	column resolution_status
+		dataType: string
+		lineageTag: 90ffa8a8-f310-46b2-8e81-f35478372c2e
+		summarizeBy: none
+		sourceColumn: resolution_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column severity
+		dataType: string
+		lineageTag: 515326da-ab17-4f34-aa85-ba6d924bbb01
+		summarizeBy: none
+		sourceColumn: severity
+
+		annotation SummarizationSetBy = Automatic
+
+	column channel
+		dataType: string
+		lineageTag: d0593ecc-1dcc-467f-a7eb-c89b2999d6cb
+		summarizeBy: none
+		sourceColumn: channel
+
+		annotation SummarizationSetBy = Automatic
+
+	column ReportedDate
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 3561f632-6e3f-4532-8fbb-e2728841fa62
+		summarizeBy: none
+		sourceColumn: ReportedDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column DelayBucket = SWITCH(TRUE(), ISBLANK(fact_chargebacks[reporting_delay_days]), "Unknown", fact_chargebacks[reporting_delay_days] <= 0, "Same day", fact_chargebacks[reporting_delay_days] <= 3, "1-3 days", fact_chargebacks[reporting_delay_days] <= 7, "4-7 days", "8+ days")
+		lineageTag: 186ce41b-2700-47da-97b1-bc2ad41227d0
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_chargebacks = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\fact_chargebacks.csv"),[Delimiter=",", Columns=21, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"complaint_id", type text}, {"txn_id", type text}, {"txn_id_valid_fk", type logical}, {"user_id", type text}, {"user_id_valid_fk", type logical}, {"merchant_id", type text}, {"merchant_id_valid_fk", type logical}, {"transaction_timestamp", type datetime}, {"reported_timestamp", type datetime}, {"bank_response_timestamp", type datetime}, {"timestamps_logically_valid", type logical}, {"reporting_delay_days", type number}, {"disputed_amount", type number}, {"disputed_amount_was_negative", type logical}, {"disputed_amount_missing", type logical}, {"reason_code", type text}, {"reason_code_raw", type text}, {"complaint_text", type text}, {"resolution_status", type text}, {"severity", type text}, {"channel", type text}}, "en-US"),
+				    #"Added ReportedDate" = Table.AddColumn(#"Changed Type", "ReportedDate", each try Date.From([reported_timestamp]) otherwise null, type date),
+				    #"Errors Replaced" = Table.ReplaceErrorValues(#"Added ReportedDate", List.Transform(Table.ColumnNames(#"Added ReportedDate"), each {_, null}))
+				in
+				    #"Errors Replaced"
+
+	annotation PBI_ResultType = Table
+

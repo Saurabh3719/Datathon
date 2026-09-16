@@ -1,0 +1,85 @@
+table DateTable
+	lineageTag: 380f820f-5f3b-4b24-ac37-0cf2976096d6
+
+	column Date
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 424a1345-423e-435e-8bfe-fbe15f218ae6
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 760395e7-3783-41cd-a809-750baf61f55f
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: string
+		lineageTag: c3d461d3-cd23-4bad-b61f-3a26c4fcaecc
+		summarizeBy: none
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthNumber
+		dataType: int64
+		formatString: 0
+		lineageTag: 7d40e47e-19b7-4b03-851e-66d7840bd662
+		summarizeBy: none
+		sourceColumn: MonthNumber
+
+		annotation SummarizationSetBy = Automatic
+
+	column MonthName
+		dataType: string
+		lineageTag: 57e04592-7caa-46f0-9763-8481fbf17b65
+		summarizeBy: none
+		sourceColumn: MonthName
+
+		annotation SummarizationSetBy = Automatic
+
+	column YearMonth
+		dataType: string
+		lineageTag: 3524afd4-cd04-46c2-9b35-72c54b4c0e8a
+		summarizeBy: none
+		sourceColumn: YearMonth
+
+		annotation SummarizationSetBy = Automatic
+
+	column DayName
+		dataType: string
+		lineageTag: a91c8cb6-fad0-4942-91f6-479ac538d9fe
+		summarizeBy: none
+		sourceColumn: DayName
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DateTable = m
+		mode: import
+		source =
+				let
+				    StartDate = #date(2023,1,1),
+				    EndDate = #date(2026,12,31),
+				    NumberOfDays = Duration.Days(EndDate - StartDate) + 1,
+				    DateList = List.Dates(StartDate, NumberOfDays, #duration(1,0,0,0)),
+				    #"Converted to Table" = Table.FromList(DateList, Splitter.SplitByNothing(), {"Date"}, null, ExtraValues.Error),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Converted to Table",{{"Date", type date}}),
+				    #"Added Year" = Table.AddColumn(#"Changed Type", "Year", each Date.Year([Date]), Int64.Type),
+				    #"Added Quarter" = Table.AddColumn(#"Added Year", "Quarter", each "Q" & Text.From(Date.QuarterOfYear([Date])), type text),
+				    #"Added MonthNumber" = Table.AddColumn(#"Added Quarter", "MonthNumber", each Date.Month([Date]), Int64.Type),
+				    #"Added MonthName" = Table.AddColumn(#"Added MonthNumber", "MonthName", each Date.ToText([Date], "MMM"), type text),
+				    #"Added YearMonth" = Table.AddColumn(#"Added MonthName", "YearMonth", each Date.ToText([Date], "yyyy-MM"), type text),
+				    #"Added DayName" = Table.AddColumn(#"Added YearMonth", "DayName", each Date.ToText([Date], "ddd"), type text)
+				in
+				    #"Added DayName"
+
+	annotation __PBI_TimeIntelligenceEnabled = 1
+
+	annotation PBI_ResultType = Table
+

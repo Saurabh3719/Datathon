@@ -1,0 +1,155 @@
+table dim_merchants
+	lineageTag: 77041343-f0fc-4aa0-8162-099ef6b0dd65
+
+	column merchant_id
+		dataType: string
+		lineageTag: 88aaa8e2-1c6e-43db-ae0a-dc8365117d40
+		summarizeBy: none
+		sourceColumn: merchant_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_name
+		dataType: string
+		lineageTag: 8a4e7a42-0214-4f7e-b7de-baf80bc1c243
+		summarizeBy: none
+		sourceColumn: merchant_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column mcc
+		dataType: string
+		lineageTag: d29ad2dd-79d1-4db5-a458-ff20a53e863d
+		summarizeBy: none
+		sourceColumn: mcc
+
+		annotation SummarizationSetBy = Automatic
+
+	column mcc_imputed
+		dataType: boolean
+		lineageTag: a56a966d-02a3-4606-99bf-af3b36d31c4b
+		summarizeBy: none
+		sourceColumn: mcc_imputed
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_category
+		dataType: string
+		lineageTag: 94f01e97-d9a4-4ad1-80e5-e2c68013b9d7
+		summarizeBy: none
+		sourceColumn: merchant_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column business_type
+		dataType: string
+		lineageTag: ec1e72b5-7db3-483e-a976-e6d0e1523203
+		summarizeBy: none
+		sourceColumn: business_type
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		lineageTag: f90b5fa7-4897-400d-af6f-682d76fa2a28
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column state
+		dataType: string
+		lineageTag: cd2e7cdb-26fe-4934-ac92-734f2e321f79
+		summarizeBy: none
+		sourceColumn: state
+
+		annotation SummarizationSetBy = Automatic
+
+	column onboarding_date
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: fdf443de-fd78-47c1-aabf-c2d8b45af384
+		summarizeBy: none
+		sourceColumn: onboarding_date
+
+		annotation SummarizationSetBy = Automatic
+
+	column settlement_account_on_file
+		dataType: boolean
+		lineageTag: 1b99680c-963c-4000-a4f3-084626e253e3
+		summarizeBy: none
+		sourceColumn: settlement_account_on_file
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_status
+		dataType: string
+		lineageTag: 06b3ed36-d693-4731-be52-ddd63596e614
+		summarizeBy: none
+		sourceColumn: merchant_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column declared_avg_ticket_size
+		dataType: double
+		formatString: ₹#,0.00
+		lineageTag: 56a5c767-1244-49de-b634-9282b12be386
+		summarizeBy: sum
+		sourceColumn: declared_avg_ticket_size
+
+		annotation SummarizationSetBy = Automatic
+
+	column declared_avg_ticket_size_was_negative
+		dataType: boolean
+		lineageTag: 322830a0-fd89-4ab6-9b3b-d967177b0d07
+		summarizeBy: none
+		sourceColumn: declared_avg_ticket_size_was_negative
+
+		annotation SummarizationSetBy = Automatic
+
+	column DisputeRiskFlag = IF(ISBLANK(dim_merchants[merchant_id]), "No Matching Merchant", VAR CB = COUNTROWS(RELATEDTABLE(fact_chargebacks)) RETURN SWITCH(TRUE(), CB >= 2, "Repeat (2+) Disputes", CB = 1, "Single Dispute", "No Disputes"))
+		lineageTag: 580383bf-6225-456a-935a-78c88da646ac
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column HadSpikeDay =
+			IF(ISBLANK(dim_merchants[merchant_id]), "No Matching Merchant", VAR T = RELATEDTABLE(fact_transactions)
+			VAR SpikeDays = COUNTROWS(FILTER(SUMMARIZE(T, fact_transactions[TxnDate], "C", COUNTROWS(fact_transactions)), [C] >= 2))
+			RETURN IF(SpikeDays > 0, "Spike Day (2+ same-day txns)", "Normal"))
+		lineageTag: ba2d7a99-e843-4269-8f0d-c697ad50a448
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column MerchantCategoryDisplay = IF(ISBLANK(dim_merchants[merchant_category]) || dim_merchants[merchant_category] = "", "No Matching Merchant", dim_merchants[merchant_category])
+		lineageTag: 084082a4-be55-42a4-9ee5-b0019a576c49
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column MerchantStatusDisplay = IF(ISBLANK(dim_merchants[merchant_status]) || dim_merchants[merchant_status] = "", "No Matching Merchant", dim_merchants[merchant_status])
+		lineageTag: 58286d3d-b2b2-4875-ba4a-62e7d59fe2dc
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column MerchantNameDisplay = IF(ISBLANK(dim_merchants[merchant_name]) || dim_merchants[merchant_name] = "", "No Matching Merchant", dim_merchants[merchant_name])
+		lineageTag: 21710490-4c3a-43f0-9789-df0f40434395
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_merchants = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\dim_merchants.csv"),[Delimiter=",", Columns=13, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"merchant_id", type text}, {"merchant_name", type text}, {"mcc", type text}, {"mcc_imputed", type logical}, {"merchant_category", type text}, {"business_type", type text}, {"city", type text}, {"state", type text}, {"onboarding_date", type datetime}, {"settlement_account_on_file", type logical}, {"merchant_status", type text}, {"declared_avg_ticket_size", type number}, {"declared_avg_ticket_size_was_negative", type logical}}, "en-US"),
+				    #"Errors Replaced" = Table.ReplaceErrorValues(#"Changed Type", List.Transform(Table.ColumnNames(#"Changed Type"), each {_, null}))
+				in
+				    #"Errors Replaced"
+
+	annotation PBI_ResultType = Table
+

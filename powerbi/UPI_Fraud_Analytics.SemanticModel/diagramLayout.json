@@ -1,0 +1,113 @@
+{
+  "version": "1.1.0",
+  "diagrams": [
+    {
+      "ordinal": 0,
+      "scrollPosition": {
+        "x": 0,
+        "y": 0
+      },
+      "nodes": [
+        {
+          "location": {
+            "x": 856.56579033289518,
+            "y": 340.22130142471588
+          },
+          "nodeIndex": "_Measures",
+          "nodeLineageTag": "1fb3f201-b686-4b6c-85f3-020361102fbd",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 570.01154655222945,
+            "y": 682.44260284943152
+          },
+          "nodeIndex": "DateTable",
+          "nodeLineageTag": "0d203894-8c15-4dbe-ac4a-a3a7c272699f",
+          "size": {
+            "height": 248,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 622.56579033289506,
+            "y": -50
+          },
+          "nodeIndex": "dim_customers",
+          "nodeLineageTag": "135f3c65-54c1-4d7e-a53a-c5d30e54dff8",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 50,
+            "y": 403.92716191104421
+          },
+          "nodeIndex": "dim_merchants",
+          "nodeLineageTag": "a410f291-0e3b-4535-8ea7-d04385d7f5f4",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 335.57881013738506,
+            "y": 264.07751410793156
+          },
+          "nodeIndex": "fact_chargebacks",
+          "nodeLineageTag": "b3f4593c-3e8e-4c75-b685-cdfee460804e",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 621.28934273911011,
+            "y": 329.59274614329985
+          },
+          "nodeIndex": "fact_transactions",
+          "nodeLineageTag": "2f71b836-4c96-427a-9ccc-a417c621264e",
+          "size": {
+            "height": 300,
+            "width": 234
+          },
+          "zIndex": 0
+        },
+        {
+          "location": {
+            "x": 1140.5657903328952,
+            "y": 390.22130142471588
+          },
+          "nodeIndex": "MerchantSpikeDays",
+          "nodeLineageTag": "46412722-8238-48a2-bd0a-a4117f62433c",
+          "size": {
+            "height": 200,
+            "width": 234
+          },
+          "zIndex": 0
+        }
+      ],
+      "name": "All tables",
+      "zoomValue": 100,
+      "pinKeyFieldsToTop": false,
+      "showExtraHeaderInfo": false,
+      "hideKeyFieldsWhenCollapsed": false,
+      "tablesLocked": false
+    }
+  ],
+  "selectedDiagram": "All tables",
+  "defaultDiagram": "All tables"
+}

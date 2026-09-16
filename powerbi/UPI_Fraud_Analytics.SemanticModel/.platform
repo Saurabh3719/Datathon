@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "UPI_Fraud_Analytics"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "60e74bc2-b3d5-4888-bca6-c926fe35b89c"
+  }
+}

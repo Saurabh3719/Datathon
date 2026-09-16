@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analytics of TransOrg</title>
+<script src="chart.umd.min.js"></script>
+<link rel="stylesheet" href="nav-bar.css" />
+<link rel="stylesheet" href="chat-widget.css" />
+<style>
+  :root {
+    --page:           #FBF7EF;
+    --surface-1:      #FFFFFF;
+    --surface-2:      #F5EEDD;
+    --surface-3:      #EDE2C9;
+    --border:         rgba(120, 90, 40, 0.10);
+    --border-strong:  rgba(120, 90, 40, 0.18);
+    --text-primary:   #17130E;
+    --text-secondary: #453B28;
+    --text-muted:     #A89876;
+    --accent:         #6366F1;
+    --accent-2:       #06B6D4;
+    --good:           #059669;
+    --warning:        #D97706;
+    --critical:       #DC2626;
+    --shadow-card:    0 4px 20px -6px rgba(60, 45, 20, 0.12);
+    --shadow-pop:     0 16px 40px -10px rgba(60, 45, 20, 0.22);
+    --radius:         16px;
+    --font-header:    'Times New Roman', Times, serif;
+    --font-content:   Arial, Helvetica, sans-serif;
+    --font-ui:        Arial, Helvetica, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  h1, h2, h3, .brand strong { font-family: var(--font-header); font-weight: 800; }
+  .pbi-intro p { font-family: var(--font-content); font-size: 1em; line-height: 1.55; }
+
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--page); color: var(--text-primary);
+    font-family: var(--font-ui);
+  }
+
+  .app-shell { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* ---- Main PBI area ---- */
+  main.pbi-area {
+    flex: 1 1 auto; overflow-y: auto;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .pbi-intro { max-width: 900px; text-align: center; margin: 18px auto 4px; padding: 0 24px; }
+  .pbi-intro h1 { margin: 0 0 10px; font-size: 22px; letter-spacing: -0.01em; }
+  .pbi-intro p { margin: 0 0 4px; color: var(--text-secondary); font-size: 13.5px; }
+
+  /* Uniform 10px frame around the embedded report, on every side. */
+  .pbi-frame { flex: 1 1 auto; width: 100%; padding: 10px; display: flex; }
+  .pbi-card {
+    flex: 1 1 auto; width: 100%;
+    background: var(--surface-1);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-pop);
+    overflow: hidden; position: relative;
+  }
+  #pbiFrame { width: 100%; height: 100%; border: 0; display: block; background: #fff; }
+  .pbi-placeholder {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; gap: 10px; padding: 40px; text-align: center;
+    color: var(--text-secondary); background: var(--surface-2);
+  }
+  .pbi-placeholder h2 { color: var(--text-primary); font-size: 18px; margin: 0; }
+  .pbi-placeholder code {
+    background: var(--surface-3); border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 7px; color: var(--accent); font-size: 12.5px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+  <nav class="top-nav" id="siteNav" data-active="dashboard"></nav>
+
+  <main class="pbi-area">
+    <div class="pbi-intro">
+      <h1>UPI Fraud &amp; Merchant Risk Analytics</h1>
+      <p>This project digs through UPI payments to spot fraud patterns, risky merchants, and customer disputes before they turn into bigger problems.</p>
+      <p>We started with a messy, real-world-style dataset, cleaned it up properly, and turned it into one reliable source of truth behind every chart and number you'll see.</p>
+      <p>Browse the dashboard below, or just type a question to the chat assistant -- it'll answer in plain English, backed by the real data.</p>
+    </div>
+    <div class="pbi-frame">
+      <div class="pbi-card">
+        <iframe id="pbiFrame" title="UPI Fraud Analytics Power BI report" allowfullscreen hidden></iframe>
+        <div id="pbiPlaceholder" class="pbi-placeholder">
+          <h2>Power BI report not configured yet</h2>
+          <p>
+            Publish the report in Power BI Desktop, then in the Power BI service use<br/>
+            <strong>File &gt; Embed report &gt; Publish to web (public)</strong> to get an embed link.<br/>
+            Paste that URL into <code>CONFIG.POWERBI_EMBED_URL</code> near the top of this file's script.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  window.CHAT_CONFIG = {
+    // Where the FastAPI text-to-SQL agent (agent/app.py) is reachable.
+    // Auto-resolves to whatever host served this page, on port 8000 -- so
+    // this works unmodified both locally (localhost:8000) and once deployed
+    // (http://<public-ip>:8000), with no manual editing needed either way.
+    API_BASE_URL: window.location.protocol + "//" + window.location.hostname + ":8000",
+  };
+
+  // "Publish to web" embed URL from the Power BI service (File > Embed
+  // report > Publish to web (public)).
+  const POWERBI_EMBED_URL = "https://app.powerbi.com/view?r=eyJrIjoiMTI5ZGU2MzMtM2FhYS00NDZlLWJkNmYtOTJmOGVhMWExMjUzIiwidCI6ImUxNGU3M2ViLTUyNTEtNDM4OC04ZDY3LThmOWYyZTJkNWE0NiIsImMiOjEwfQ%3D%3D";
+
+  (function initPowerBi() {
+    const frame = document.getElementById("pbiFrame");
+    const placeholder = document.getElementById("pbiPlaceholder");
+    if (POWERBI_EMBED_URL) {
+      frame.src = POWERBI_EMBED_URL;
+      frame.hidden = false;
+      placeholder.hidden = true;
+    }
+  })();
+</script>
+<script src="nav-bar.js"></script>
+<script src="chat-widget.js"></script>
+</body>
+</html>

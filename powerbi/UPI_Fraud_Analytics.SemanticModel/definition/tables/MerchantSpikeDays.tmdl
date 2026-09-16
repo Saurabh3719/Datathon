@@ -1,0 +1,45 @@
+table MerchantSpikeDays
+	lineageTag: 43ea0a71-72ac-456b-9300-6f45d8db4f8f
+
+	column merchant_id
+		lineageTag: 86f80191-ad9e-4c15-9e3b-c8aa40ca8a35
+		isNameInferred
+		sourceColumn: fact_transactions[merchant_id]
+
+	column TxnDate
+		lineageTag: 39b4884b-5c45-4a0e-9ce5-bbf3301f8287
+		isNameInferred
+		sourceColumn: fact_transactions[TxnDate]
+
+	column TxnCount
+		lineageTag: ed4c2ce2-7e6a-4943-8972-6a7ff54c54b6
+		isNameInferred
+		sourceColumn: [TxnCount]
+
+	column MerchantName
+		lineageTag: dc9f590b-ef2e-4c3e-b1e1-686d13b63d7f
+		isNameInferred
+		sourceColumn: [MerchantName]
+
+	column MerchantCategory
+		lineageTag: e6c99308-ed73-45aa-9d18-526fdf69a236
+		isNameInferred
+		sourceColumn: [MerchantCategory]
+
+	partition MerchantSpikeDays = calculated
+		mode: import
+		source =
+				VAR Spikes =
+					FILTER(
+						SUMMARIZE(fact_transactions, fact_transactions[merchant_id], fact_transactions[TxnDate], "TxnCount", COUNTROWS(fact_transactions)),
+						[TxnCount] >= 2
+					)
+				RETURN
+					ADDCOLUMNS(
+						Spikes,
+						"MerchantName", LOOKUPVALUE(dim_merchants[merchant_name], dim_merchants[merchant_id], [merchant_id]),
+						"MerchantCategory", LOOKUPVALUE(dim_merchants[merchant_category], dim_merchants[merchant_id], [merchant_id])
+					)
+
+	annotation PBI_ResultType = Table
+

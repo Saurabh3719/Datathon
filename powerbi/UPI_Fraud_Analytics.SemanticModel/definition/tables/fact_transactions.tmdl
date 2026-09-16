@@ -1,0 +1,152 @@
+table fact_transactions
+	lineageTag: 6a180094-e476-47ab-92a2-c38e855117fa
+
+	column txn_id
+		dataType: string
+		lineageTag: 02a67aaa-8c86-4ae9-991e-0542626b46d2
+		summarizeBy: none
+		sourceColumn: txn_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column timestamp
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 231a7960-2c49-44d0-a329-cd5c26dffa7b
+		summarizeBy: none
+		sourceColumn: timestamp
+
+		annotation SummarizationSetBy = Automatic
+
+	column user_id
+		dataType: string
+		lineageTag: 51e9a94c-ef8d-4686-bbf7-3461e8bf9754
+		summarizeBy: none
+		sourceColumn: user_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column user_id_valid_fk
+		dataType: boolean
+		lineageTag: ddc5b8f0-39f7-43d6-a72c-bae3151a4c28
+		summarizeBy: none
+		sourceColumn: user_id_valid_fk
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_id
+		dataType: string
+		lineageTag: 11846e9b-9e57-416f-b578-5c5ef1931422
+		summarizeBy: none
+		sourceColumn: merchant_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column merchant_id_valid_fk
+		dataType: boolean
+		lineageTag: bfc02aaa-3c80-4343-9fb5-69baf017cc69
+		summarizeBy: none
+		sourceColumn: merchant_id_valid_fk
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount
+		dataType: double
+		formatString: ₹#,0.00
+		lineageTag: dfb8b101-e061-423c-a89b-92f9d2b006b5
+		summarizeBy: sum
+		sourceColumn: amount
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount_was_negative
+		dataType: boolean
+		lineageTag: 76e8c675-7082-45c3-885d-392ba10dba93
+		summarizeBy: none
+		sourceColumn: amount_was_negative
+
+		annotation SummarizationSetBy = Automatic
+
+	column amount_missing
+		dataType: boolean
+		lineageTag: 24321cf2-c775-4535-8140-e0bdc18a957f
+		summarizeBy: none
+		sourceColumn: amount_missing
+
+		annotation SummarizationSetBy = Automatic
+
+	column utr
+		dataType: string
+		lineageTag: 6a3c8df9-8101-4b19-81b8-9d39dce609b8
+		summarizeBy: none
+		sourceColumn: utr
+
+		annotation SummarizationSetBy = Automatic
+
+	column utr_valid
+		dataType: boolean
+		lineageTag: a04d21c2-6b4e-495e-8b49-4ffbaad31537
+		summarizeBy: none
+		sourceColumn: utr_valid
+
+		annotation SummarizationSetBy = Automatic
+
+	column utr_missing
+		dataType: boolean
+		lineageTag: aab4b2b1-fc68-4eaa-82cc-1e16f0be03ae
+		summarizeBy: none
+		sourceColumn: utr_missing
+
+		annotation SummarizationSetBy = Automatic
+
+	column mcc
+		dataType: string
+		lineageTag: c4e35768-98c3-40ed-9176-c0fc89ac3126
+		summarizeBy: none
+		sourceColumn: mcc
+
+		annotation SummarizationSetBy = Automatic
+
+	column status
+		dataType: string
+		lineageTag: e455b0c9-e7a1-48b6-a92d-d5ed807ffdaf
+		summarizeBy: none
+		sourceColumn: status
+
+		annotation SummarizationSetBy = Automatic
+
+	column TxnDate
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: b1aa1fe2-eaf9-47b4-a058-eae8a3c140b2
+		summarizeBy: none
+		sourceColumn: TxnDate
+
+		annotation SummarizationSetBy = Automatic
+
+	column UTRProblem = IF(ISBLANK(fact_transactions[txn_id]), "No Matching Transaction", IF(fact_transactions[utr_missing] = TRUE || fact_transactions[utr_valid] = FALSE, "Missing/Invalid", "OK"))
+		lineageTag: b5a6589b-4479-4c1e-82ab-2389e12ec75a
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column StatusDisplay = IF(ISBLANK(fact_transactions[status]) || fact_transactions[status] = "", "No Matching Transaction", fact_transactions[status])
+		lineageTag: 2b32cee6-b885-4026-b5b7-e1297ccb1bf2
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_transactions = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\fact_transactions.csv"),[Delimiter=",", Columns=14, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"txn_id", type text}, {"timestamp", type datetime}, {"user_id", type text}, {"user_id_valid_fk", type logical}, {"merchant_id", type text}, {"merchant_id_valid_fk", type logical}, {"amount", type number}, {"amount_was_negative", type logical}, {"amount_missing", type logical}, {"utr", type text}, {"utr_valid", type logical}, {"utr_missing", type logical}, {"mcc", type text}, {"status", type text}}, "en-US"),
+				    #"Added TxnDate" = Table.AddColumn(#"Changed Type", "TxnDate", each try Date.From([timestamp]) otherwise null, type date),
+				    #"Errors Replaced" = Table.ReplaceErrorValues(#"Added TxnDate", List.Transform(Table.ColumnNames(#"Added TxnDate"), each {_, null}))
+				in
+				    #"Errors Replaced"
+
+	annotation PBI_ResultType = Table
+

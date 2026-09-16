@@ -1,0 +1,29 @@
+relationship 6564a7fc-ffa7-467f-be9f-957432adf9a9
+	fromColumn: fact_transactions.user_id
+	toColumn: dim_customers.user_id
+
+relationship 146f11d1-b4ed-4d5b-9902-b57e26c36b90
+	fromColumn: fact_transactions.merchant_id
+	toColumn: dim_merchants.merchant_id
+
+relationship 5ab566cb-ac83-43a2-9f94-f2342ce6d69f
+	fromColumn: fact_chargebacks.user_id
+	toColumn: dim_customers.user_id
+
+relationship 7ba2fcf7-7b34-4aca-b38e-d40d5af7c8fd
+	fromColumn: fact_chargebacks.merchant_id
+	toColumn: dim_merchants.merchant_id
+
+relationship 2b0159af-12f9-4ebd-9f6d-e5bf2463981d
+	isActive: false
+	fromColumn: fact_chargebacks.txn_id
+	toColumn: fact_transactions.txn_id
+
+relationship c0de4bb7-9123-40af-a613-f18be3017691
+	fromColumn: fact_transactions.TxnDate
+	toColumn: DateTable.Date
+
+relationship a0b7d95c-e16f-4e7d-91ad-2ba28baa5785
+	fromColumn: fact_chargebacks.ReportedDate
+	toColumn: DateTable.Date
+

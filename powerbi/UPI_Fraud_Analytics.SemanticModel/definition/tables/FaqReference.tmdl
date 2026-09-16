@@ -1,0 +1,30 @@
+table FaqReference
+	lineageTag: dcbbfe06-a1a9-4086-b405-c6314836887e
+
+	column Question
+		lineageTag: 5537cb98-31d6-429a-b560-55aff4127180
+		isNameInferred
+		sourceColumn: [Question]
+
+	column Answer
+		lineageTag: c99ec570-8952-471f-b50e-e1b22cd2ee7f
+		isNameInferred
+		sourceColumn: [Answer]
+
+	partition FaqReference = calculated
+		mode: import
+		source =
+				DATATABLE(
+					"Question", STRING, "Answer", STRING,
+					{
+					{"How often are these KPIs updated?", "This report is a static batch build. Numbers change only when the underlying script is rerun and the file is republished -- there is no live/scheduled refresh."},
+					{"What's the difference between MoM and YoY growth?", "Month-over-month compares this period to the one right before it; year-over-year compares it to the same period a year ago. This report shows a first-half vs. second-half trend instead, since the dataset covers one fixed window rather than multiple calendar years."},
+					{"How are risk thresholds like '2+ disputes' decided?", "They're fixed business rules chosen for this project, not statistically derived cutoffs -- see the Formula/Logic column alongside for the exact rule behind each metric."},
+					{"Why do some KPIs exclude unmatched transactions?", "Match-rate KPIs deliberately separate out transactions with no matching customer/merchant record, since blending them in would understate how often the join genuinely succeeds."},
+					{"Which numbers can I trust to match the chatbot?", "All of them -- the chatbot and this report read the exact same four cleaned CSV files, so there is only one source of truth in this project."},
+					{"Who do I ask if a number looks wrong?", "Check the Formula/Logic column first. If the logic matches your expectation but the value still looks off, that's a data-pipeline question (scripts/clean_pipeline.py), not a report question."}
+					}
+				)
+
+	annotation PBI_ResultType = Table
+

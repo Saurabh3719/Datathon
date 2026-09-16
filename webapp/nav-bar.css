@@ -1,0 +1,45 @@
+/* Shared top navigation bar -- one definition (see nav-bar.js), used on
+   every page. Relies on each page's own :root custom properties. */
+
+nav.top-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 24px; background: var(--surface-1); border-bottom: 1px solid var(--border);
+  flex: 0 0 auto; box-shadow: var(--shadow-card); position: sticky; top: 0; z-index: 30;
+  font-family: var(--font-ui, system-ui, sans-serif);
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand .logo-dot {
+  width: 30px; height: 30px; border-radius: 9px;
+  background: linear-gradient(135deg, #2A2A2A, #000000);
+  display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 800;
+  font-family: var(--font-ui, system-ui, sans-serif);
+}
+.brand strong { font-size: 15px; letter-spacing: -0.01em; }
+.brand span.sub { display: block; font-size: 11px; color: var(--text-muted); font-family: var(--font-ui, system-ui, sans-serif); }
+.nav-links { display: flex; align-items: center; gap: 4px; }
+.nav-links a {
+  text-decoration: none; color: var(--text-secondary); font-size: 13.5px; font-weight: 600;
+  padding: 8px 13px; border-radius: 9px; transition: all 0.18s ease;
+  display: inline-flex; align-items: center; gap: 7px;
+}
+.nav-links a svg { flex: 0 0 auto; opacity: 0.75; transition: opacity 0.18s ease; }
+.nav-links a:hover { color: var(--text-primary); background: var(--surface-2); }
+.nav-links a:hover svg { opacity: 1; }
+.nav-links a.active { color: #000000; background: rgba(0, 0, 0, 0.08); }
+.nav-links a.active svg { opacity: 1; stroke: #000000; }
+.nav-links a.gh-link { display: inline-flex; align-items: center; gap: 6px; }
+
+.status-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; color: var(--text-secondary); font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 6px 12px; background: var(--surface-2);
+  font-family: var(--font-ui, system-ui, sans-serif);
+}
+.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); }
+.status-dot.ok { background: var(--good); }
+.status-dot.bad { background: var(--critical); }
+
+@media (max-width: 700px) {
+  .nav-links a:not(.gh-link) span.label { display: none; }
+  .status-pill span:not(.status-dot) { display: none; }
+}

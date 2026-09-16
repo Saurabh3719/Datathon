@@ -1,0 +1,5 @@
+expression DataFolder = "C:\Users\Asuna\Documents\Datathon\data\cleaned" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 72f0c6eb-8c04-4c85-83bf-5dba9313e5a7
+
+	annotation PBI_ResultType = Text
+

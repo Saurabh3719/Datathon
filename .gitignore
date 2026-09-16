@@ -1,0 +1,23 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# Raw source files are kept local only - the KYC file contains unmasked
+# PAN/Aadhaar-shaped values. The cleaned, masked, analytics-ready data in
+# data/cleaned/ (plus full documentation of every transform in reports/)
+# is what's published.
+data/raw/
+
+# Generated SQLite DB for the text-to-SQL agent -- reproducible from
+# data/cleaned/*.csv via `python3 agent/build_db.py`, no need to version it.
+agent/analytics.db
+
+# Real secrets -- OPENROUTER_API_KEY lives here locally. Never commit this
+# file; .env.example is the template that IS committed.
+.env
+
+# Power BI Desktop's local query cache (cache.abf, several MB of binary)
+# and machine-specific editor/window settings -- regenerated automatically
+# whenever the .pbip is opened, not portable source.
+powerbi/**/.pbi/

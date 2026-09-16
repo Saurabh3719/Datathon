@@ -1,0 +1,185 @@
+table dim_customers
+	lineageTag: 0d52eeb6-4a5e-4d4a-89c2-eace0c24b28d
+
+	column user_id
+		dataType: string
+		lineageTag: 193ab5de-f9ad-42f6-8b73-b2d6310dcb7f
+		summarizeBy: none
+		sourceColumn: user_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column full_name
+		dataType: string
+		lineageTag: 970266d5-4b6b-4705-9b84-ea4960d235e4
+		summarizeBy: none
+		sourceColumn: full_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column pan_masked
+		dataType: string
+		lineageTag: 59730a23-842c-43a6-bc39-64d44845f4cf
+		summarizeBy: none
+		sourceColumn: pan_masked
+
+		annotation SummarizationSetBy = Automatic
+
+	column pan_valid
+		dataType: boolean
+		lineageTag: 0fe69268-a03e-4938-b183-c26d58e17a4a
+		summarizeBy: none
+		sourceColumn: pan_valid
+
+		annotation SummarizationSetBy = Automatic
+
+	column aadhaar_masked
+		dataType: string
+		lineageTag: 51fce0bb-ccf9-49cf-8899-f9a81f32bdd9
+		summarizeBy: none
+		sourceColumn: aadhaar_masked
+
+		annotation SummarizationSetBy = Automatic
+
+	column aadhaar_valid
+		dataType: boolean
+		lineageTag: cb6fc5aa-a3db-401b-a0bc-84aa0bbd4c1a
+		summarizeBy: none
+		sourceColumn: aadhaar_valid
+
+		annotation SummarizationSetBy = Automatic
+
+	column date_of_birth
+		dataType: dateTime
+		formatString: Short Date
+		lineageTag: 22186bf8-badd-400d-b3cc-bb3bb6e5df7a
+		summarizeBy: none
+		sourceColumn: date_of_birth
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		lineageTag: 6c544622-79ed-4bba-9031-d96b9feda0b0
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column state
+		dataType: string
+		lineageTag: d1acf45b-9bae-45a0-9cf2-775ae6095b7b
+		summarizeBy: none
+		sourceColumn: state
+
+		annotation SummarizationSetBy = Automatic
+
+	column monthly_income
+		dataType: double
+		formatString: ₹#,0.00
+		lineageTag: 9c59af63-8370-4f4c-948f-9ea60040d155
+		summarizeBy: sum
+		sourceColumn: monthly_income
+
+		annotation SummarizationSetBy = Automatic
+
+	column income_was_negative
+		dataType: boolean
+		lineageTag: 7aba5f4e-ddba-411a-9f0e-b3debcf83d48
+		summarizeBy: none
+		sourceColumn: income_was_negative
+
+		annotation SummarizationSetBy = Automatic
+
+	column income_missing
+		dataType: boolean
+		lineageTag: 3eb335e7-6d65-45b7-97e6-0f0f4e076dfa
+		summarizeBy: none
+		sourceColumn: income_missing
+
+		annotation SummarizationSetBy = Automatic
+
+	column occupation
+		dataType: string
+		lineageTag: 78b1ec43-5b0f-478b-b404-72c9caae8729
+		summarizeBy: none
+		sourceColumn: occupation
+
+		annotation SummarizationSetBy = Automatic
+
+	column signup_timestamp
+		dataType: dateTime
+		formatString: General Date
+		lineageTag: 25cd3a28-3e1e-4e67-bdea-cefb73329feb
+		summarizeBy: none
+		sourceColumn: signup_timestamp
+
+		annotation SummarizationSetBy = Automatic
+
+	column kyc_status
+		dataType: string
+		lineageTag: 2c890185-0ff6-46a2-9ae0-04799e51a9e0
+		summarizeBy: none
+		sourceColumn: kyc_status
+
+		annotation SummarizationSetBy = Automatic
+
+	column risk_segment
+		dataType: string
+		lineageTag: cd5e076a-4f8c-4f60-bb94-b63787c8ca3f
+		summarizeBy: none
+		sourceColumn: risk_segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column risk_segment_missing
+		dataType: boolean
+		lineageTag: 26ddabd0-32c6-4de0-bfde-3a0f17d3090f
+		summarizeBy: none
+		sourceColumn: risk_segment_missing
+
+		annotation SummarizationSetBy = Automatic
+
+	column DisputeRiskFlag = IF(ISBLANK(dim_customers[user_id]), "No Matching Customer", VAR CB = COUNTROWS(RELATEDTABLE(fact_chargebacks)) RETURN SWITCH(TRUE(), CB >= 2, "Repeat (2+) Disputes", CB = 1, "Single Dispute", "No Disputes"))
+		lineageTag: a01b5f30-7d64-43ab-adff-924e5e4d343a
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column KycStatusDisplay = IF(ISBLANK(dim_customers[kyc_status]) || dim_customers[kyc_status] = "", "No Matching Customer", dim_customers[kyc_status])
+		lineageTag: bb926a03-255b-4801-a583-8737064ff840
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column RiskSegmentDisplay = IF(ISBLANK(dim_customers[user_id]), "No Matching Customer", IF(ISBLANK(dim_customers[risk_segment]) || dim_customers[risk_segment] = "", "Not Provided", dim_customers[risk_segment]))
+		lineageTag: 3deb0593-19e6-4915-829d-3ad117018163
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column StateDisplay = IF(ISBLANK(dim_customers[state]) || dim_customers[state] = "", "No Matching Customer", dim_customers[state])
+		lineageTag: fb484fdf-b033-4426-b6a5-2c4488baada7
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	column CityDisplay = IF(ISBLANK(dim_customers[city]) || dim_customers[city] = "", "No Matching Customer", dim_customers[city])
+		lineageTag: 29678ee9-8c2c-4901-88c3-7f720e306e99
+		summarizeBy: none
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_customers = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(DataFolder & "\dim_customers.csv"),[Delimiter=",", Columns=17, Encoding=65001, QuoteStyle=QuoteStyle.Csv]),
+				    #"Promoted Headers" = Table.PromoteHeaders(Source, [PromoteAllScalars=true]),
+				    #"Changed Type" = Table.TransformColumnTypes(#"Promoted Headers",{{"user_id", type text}, {"full_name", type text}, {"pan_masked", type text}, {"pan_valid", type logical}, {"aadhaar_masked", type text}, {"aadhaar_valid", type logical}, {"date_of_birth", type date}, {"city", type text}, {"state", type text}, {"monthly_income", type number}, {"income_was_negative", type logical}, {"income_missing", type logical}, {"occupation", type text}, {"signup_timestamp", type datetime}, {"kyc_status", type text}, {"risk_segment", type text}, {"risk_segment_missing", type logical}}, "en-US"),
+				    #"Errors Replaced" = Table.ReplaceErrorValues(#"Changed Type", List.Transform(Table.ColumnNames(#"Changed Type"), each {_, null}))
+				in
+				    #"Errors Replaced"
+
+	annotation PBI_ResultType = Table
+

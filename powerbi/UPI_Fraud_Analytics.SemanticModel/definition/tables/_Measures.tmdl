@@ -1,0 +1,194 @@
+table _Measures
+	lineageTag: 63c56be8-809e-4715-8391-df6b07bac6e1
+
+	measure 'Total Transactions' = COUNTROWS(fact_transactions)
+		formatString: #,0
+		lineageTag: 8bb2b8ae-3ca7-4a6b-aac7-95f357f19e55
+
+	measure 'Total Txn Amount' = SUM(fact_transactions[amount])
+		formatString: ₹#,0.00
+		lineageTag: e3ac09d0-b1da-4749-917b-287d000c7466
+
+	measure 'Total Txn Amount (Success)' = CALCULATE([Total Txn Amount], fact_transactions[status] = "SUCCESS")
+		formatString: ₹#,0.00
+		lineageTag: 6f8d7c92-b668-4909-abde-575b8a9206d8
+
+	measure 'Avg Txn Value' = AVERAGE(fact_transactions[amount])
+		formatString: ₹#,0.00
+		lineageTag: 004cf3f1-e4c1-45e9-b1f0-fa4747550379
+
+	measure 'Avg Txn Value (Success)' = CALCULATE([Avg Txn Value], fact_transactions[status] = "SUCCESS")
+		formatString: ₹#,0.00
+		lineageTag: a95f66cf-2b1c-4220-a77c-7c77b0f38854
+
+	measure 'Success Rate' = DIVIDE(CALCULATE([Total Transactions], fact_transactions[status] = "SUCCESS"), [Total Transactions])
+		formatString: 0.00%
+		lineageTag: 44cbf70c-3f8b-42e5-893c-b49257e18302
+
+	measure 'Failed Rate' = DIVIDE(CALCULATE([Total Transactions], fact_transactions[status] = "FAILED"), [Total Transactions])
+		formatString: 0.00%
+		lineageTag: 8894e22f-32dd-40bc-a65f-d0168f71b90e
+
+	measure 'Pending Rate' = DIVIDE(CALCULATE([Total Transactions], fact_transactions[status] = "PENDING"), [Total Transactions])
+		formatString: 0.00%
+		lineageTag: 542913cd-1d68-4215-9ec4-2baca2332613
+
+	measure 'Transactions Missing UTR' = CALCULATE([Total Transactions], fact_transactions[utr_missing] = TRUE)
+		formatString: #,0
+		lineageTag: c8b2f4f8-bf33-40c8-8aa6-002da9c7b013
+
+	measure 'Transactions Missing UTR Rate' = DIVIDE([Transactions Missing UTR], [Total Transactions])
+		formatString: 0.00%
+		lineageTag: 7b5658ea-61fc-4f9e-adc1-a5672852cf94
+
+	measure 'Transactions Missing/Invalid UTR Rate' = DIVIDE([Transactions Missing UTR] + [Transactions Invalid UTR], [Total Transactions])
+		formatString: 0.00%
+		lineageTag: ead03c75-8ad2-42e0-ab18-2b241ef5441e
+
+	measure 'Transactions Invalid UTR' = CALCULATE([Total Transactions], fact_transactions[utr_valid] = FALSE, fact_transactions[utr_missing] = FALSE)
+		formatString: #,0
+		lineageTag: 8b0e52a2-7f7b-402b-8dd8-129aba08f7e2
+
+	measure 'Chargeback Count' = COUNTROWS(fact_chargebacks)
+		formatString: #,0
+		lineageTag: 41df4332-0692-4d92-a0cf-f41a5ce5fc85
+
+	measure 'Chargeback Amount' = SUM(fact_chargebacks[disputed_amount])
+		formatString: ₹#,0.00
+		lineageTag: 242ae23f-68e1-4b7c-94bf-6209e8637bd8
+
+	measure 'CB to Txn Ratio (Count)' = DIVIDE([Chargeback Count], [Total Transactions])
+		formatString: 0.00%
+		lineageTag: eff32444-bf70-4424-b2b5-71e66744af0a
+
+	measure 'CB to Txn Ratio (Amount)' = DIVIDE([Chargeback Amount], [Total Txn Amount])
+		formatString: 0.00%
+		lineageTag: 5bf497cb-3003-47d2-ba74-5c1cad5d8bff
+
+	measure 'Avg Dispute Delay (Days)' = CALCULATE(AVERAGE(fact_chargebacks[reporting_delay_days]), fact_chargebacks[timestamps_logically_valid] = TRUE)
+		formatString: #,0.0
+		lineageTag: c82b002e-90c8-4d61-bc73-d39e0a9d37c6
+
+	measure 'Avg Dispute Delay (Days, All)' = AVERAGE(fact_chargebacks[reporting_delay_days])
+		formatString: #,0.0
+		lineageTag: 25e88c0d-c973-43e6-b793-c1a4659715c2
+
+	measure 'Disputes Reported After 7d' = CALCULATE([Chargeback Count], fact_chargebacks[reporting_delay_days] > 7)
+		formatString: #,0
+		lineageTag: ce4cf792-1315-4e2f-a814-11f6a945da7a
+
+	measure 'Disputes Reported After 7d Rate' = DIVIDE([Disputes Reported After 7d], [Chargeback Count])
+		formatString: 0.00%
+		lineageTag: c1c125e4-ab4e-4bf3-93b1-1fd83f8872dd
+
+	measure 'KYC Completion Rate' = DIVIDE(CALCULATE(COUNTROWS(dim_customers), dim_customers[kyc_status] = "VERIFIED"), COUNTROWS(dim_customers))
+		formatString: 0.00%
+		lineageTag: 6e827fbf-62f0-4595-b176-24a257f8592c
+
+	measure 'KYC Rejection Rate' = DIVIDE(CALCULATE(COUNTROWS(dim_customers), dim_customers[kyc_status] = "REJECTED"), COUNTROWS(dim_customers))
+		formatString: 0.00%
+		lineageTag: 8cd1683a-321d-434a-8f0f-fa35f8d82e2f
+
+	measure 'Total Customers' = COUNTROWS(dim_customers)
+		formatString: #,0
+		lineageTag: 5c26abe8-8230-478d-a759-af1b6490a2e0
+
+	measure 'Total Merchants' = COUNTROWS(dim_merchants)
+		formatString: #,0
+		lineageTag: bfd1dc6e-61e1-4a51-a48a-fc1d583ac6b8
+
+	measure 'Txn User FK Match Rate' = DIVIDE(CALCULATE([Total Transactions], fact_transactions[user_id_valid_fk] = TRUE), [Total Transactions])
+		formatString: 0.00%
+		lineageTag: 74c22714-f970-493a-b03a-edafa5f56e83
+
+	measure 'Txn Merchant FK Match Rate' = DIVIDE(CALCULATE([Total Transactions], fact_transactions[merchant_id_valid_fk] = TRUE), [Total Transactions])
+		formatString: 0.00%
+		lineageTag: dfdd9e1a-70a6-444d-8f47-37dd3f04c406
+
+	measure 'CB Txn FK Match Rate' = DIVIDE(CALCULATE([Chargeback Count], fact_chargebacks[txn_id_valid_fk] = TRUE), [Chargeback Count])
+		formatString: 0.00%
+		lineageTag: 137b3469-c013-40d1-bc15-b7e785be06e7
+
+	measure 'CB on Unmatched Merchant (Count)' = CALCULATE([Chargeback Count], fact_chargebacks[merchant_id_valid_fk] = FALSE)
+		formatString: #,0
+		lineageTag: 18041d00-e5b9-476c-9f83-0f47d3c9ac65
+
+	measure 'CB on Unmatched Merchant (Amount)' = CALCULATE([Chargeback Amount], fact_chargebacks[merchant_id_valid_fk] = FALSE)
+		formatString: ₹#,0.00
+		lineageTag: 2cbd37b1-34ab-4733-9229-1fe0ef172030
+
+	measure 'Merchant CB to Txn Ratio' =
+			VAR CB = CALCULATE([Chargeback Count], fact_chargebacks[merchant_id_valid_fk] = TRUE)
+			VAR TXN = CALCULATE([Total Transactions], fact_transactions[merchant_id_valid_fk] = TRUE)
+			RETURN
+				DIVIDE(CB, TXN)
+		formatString: 0.00%
+		lineageTag: d607df59-e348-4a37-98c2-19d53ed36815
+
+	measure 'High Risk Users (2+ Disputes)' = COUNTROWS(FILTER(SUMMARIZE(fact_chargebacks, fact_chargebacks[user_id], "CBCount", CALCULATE(COUNTROWS(fact_chargebacks))), [CBCount] >= 2))
+		formatString: #,0
+		lineageTag: eae6a981-39b9-4ae9-a7d3-611853b35d24
+
+	measure 'High Risk Merchants (2+ Disputes)' = COUNTROWS(FILTER(SUMMARIZE(fact_chargebacks, fact_chargebacks[merchant_id], "CBCount", CALCULATE(COUNTROWS(fact_chargebacks))), [CBCount] >= 2))
+		formatString: #,0
+		lineageTag: 7e75fa90-7b2f-4fd4-a865-113f10d5d481
+
+	measure 'Users With Disputes' = DISTINCTCOUNT(fact_chargebacks[user_id])
+		formatString: #,0
+		lineageTag: dd93c6be-5989-45ae-8e60-a1ff4e58e3ce
+
+	measure 'Merchant-Day Spikes (2+ Txns)' = COUNTROWS(FILTER(SUMMARIZE(fact_transactions, fact_transactions[merchant_id], fact_transactions[TxnDate], "TxnCount", CALCULATE(COUNTROWS(fact_transactions))), [TxnCount] >= 2))
+		formatString: #,0
+		lineageTag: 650457d2-71ad-4b21-ba5f-f0b0ab5bb711
+
+	measure 'Txn Volume Trend' =
+			VAR MinD = CALCULATE(MIN(fact_transactions[TxnDate]))
+			VAR MaxD = CALCULATE(MAX(fact_transactions[TxnDate]))
+			VAR Mid = MinD + INT((MaxD - MinD) / 2)
+			VAR FirstHalf = CALCULATE([Total Transactions], fact_transactions[TxnDate] <= Mid)
+			VAR SecondHalf = CALCULATE([Total Transactions], fact_transactions[TxnDate] > Mid)
+			VAR Pct = DIVIDE(SecondHalf - FirstHalf, FirstHalf)
+			RETURN IF(ISBLANK(Pct), "—", IF(Pct >= 0, "▲ " & FORMAT(Pct, "0.0%"), "▼ " & FORMAT(ABS(Pct), "0.0%")) & " vs 1st half")
+		lineageTag: 7cf28192-bf50-483c-b7da-3d9e037caafd
+
+	measure 'Txn Value Trend' =
+			VAR MinD = CALCULATE(MIN(fact_transactions[TxnDate]))
+			VAR MaxD = CALCULATE(MAX(fact_transactions[TxnDate]))
+			VAR Mid = MinD + INT((MaxD - MinD) / 2)
+			VAR FirstHalf = CALCULATE([Total Txn Amount], fact_transactions[TxnDate] <= Mid)
+			VAR SecondHalf = CALCULATE([Total Txn Amount], fact_transactions[TxnDate] > Mid)
+			VAR Pct = DIVIDE(SecondHalf - FirstHalf, FirstHalf)
+			RETURN IF(ISBLANK(Pct), "—", IF(Pct >= 0, "▲ " & FORMAT(Pct, "0.0%"), "▼ " & FORMAT(ABS(Pct), "0.0%")) & " vs 1st half")
+		lineageTag: 4f519183-8b95-4bc9-8b25-d0a20f805495
+
+	measure 'Success Rate Trend' =
+			VAR MinD = CALCULATE(MIN(fact_transactions[TxnDate]))
+			VAR MaxD = CALCULATE(MAX(fact_transactions[TxnDate]))
+			VAR Mid = MinD + INT((MaxD - MinD) / 2)
+			VAR FirstHalf = CALCULATE([Success Rate], fact_transactions[TxnDate] <= Mid)
+			VAR SecondHalf = CALCULATE([Success Rate], fact_transactions[TxnDate] > Mid)
+			VAR Pct = DIVIDE(SecondHalf - FirstHalf, FirstHalf)
+			RETURN IF(ISBLANK(Pct), "—", IF(Pct >= 0, "▲ " & FORMAT(Pct, "0.0%"), "▼ " & FORMAT(ABS(Pct), "0.0%")) & " vs 1st half")
+		lineageTag: 8a7370e2-5b31-4dbe-8430-ae138d212cef
+
+	measure 'Failed Rate Trend' =
+			VAR MinD = CALCULATE(MIN(fact_transactions[TxnDate]))
+			VAR MaxD = CALCULATE(MAX(fact_transactions[TxnDate]))
+			VAR Mid = MinD + INT((MaxD - MinD) / 2)
+			VAR FirstHalf = CALCULATE([Failed Rate], fact_transactions[TxnDate] <= Mid)
+			VAR SecondHalf = CALCULATE([Failed Rate], fact_transactions[TxnDate] > Mid)
+			VAR Pct = DIVIDE(SecondHalf - FirstHalf, FirstHalf)
+			RETURN IF(ISBLANK(Pct), "—", IF(Pct >= 0, "▲ " & FORMAT(Pct, "0.0%"), "▼ " & FORMAT(ABS(Pct), "0.0%")) & " vs 1st half")
+		lineageTag: 62c72219-0514-4bd9-a489-17854c878f18
+
+	column Value
+		lineageTag: ce8afe13-94be-4790-8f33-1c9ab948f185
+		isNameInferred
+		sourceColumn: [Value]
+
+	partition _Measures = calculated
+		mode: import
+		source = ROW("Value", 1)
+
+	annotation PBI_ResultType = Table
+

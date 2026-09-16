@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analytics of TransOrg</title>
+<script src="chart.umd.min.js"></script>
+<link rel="stylesheet" href="nav-bar.css" />
+<link rel="stylesheet" href="chat-widget.css" />
+<style>
+  :root {
+    --page:           #FBF7EF;
+    --surface-1:      #FFFFFF;
+    --surface-2:      #F5EEDD;
+    --surface-3:      #EDE2C9;
+    --border:         rgba(120, 90, 40, 0.10);
+    --border-strong:  rgba(120, 90, 40, 0.18);
+    --text-primary:   #17130E;
+    --text-secondary: #453B28;
+    --text-muted:     #A89876;
+    --accent:         #6366F1;
+    --accent-2:       #06B6D4;
+    --good:           #059669;
+    --warning:        #D97706;
+    --critical:       #DC2626;
+    --shadow-card:    0 4px 20px -6px rgba(60, 45, 20, 0.12);
+    --shadow-pop:     0 20px 48px -12px rgba(60, 45, 20, 0.22);
+    --radius:         16px;
+    --font-header:    'Times New Roman', Times, serif;
+    --font-content:   Arial, Helvetica, sans-serif;
+    --font-ui:        Arial, Helvetica, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; padding: 0; background: var(--page); color: var(--text-primary); font-family: var(--font-ui); }
+  h1, h2, h3, .brand strong { font-family: var(--font-header); font-weight: 800; }
+  p, li, .faq-a { font-family: var(--font-content); font-size: 1em; line-height: 1.5; }
+
+  main { max-width: 1080px; margin: 0 auto; padding: 40px 24px 100px; }
+  section.block {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: 20px;
+    padding: 30px 30px; margin-bottom: 26px; box-shadow: var(--shadow-card);
+  }
+  .block h2 { margin: 0 0 6px; font-size: 21px; }
+  .block > p.lede { margin: 0 0 20px; color: var(--text-secondary); }
+
+  /* ---- How-to steps (top) ---- */
+  .howto-list { list-style: none; margin: 0; padding: 0; counter-reset: howto; }
+  .howto-list li {
+    counter-increment: howto; position: relative; padding-left: 46px; margin-bottom: 14px; font-size: 1em;
+  }
+  .howto-list li::before {
+    content: counter(howto); position: absolute; left: 0; top: -2px;
+    width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff; font-family: var(--font-ui); font-weight: 800; font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ---- Mac terminal ---- */
+  .mac-terminal {
+    background: #FBFBFD; border-radius: 12px; border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow-card); overflow: hidden; margin: 16px 0;
+  }
+  .mac-terminal .titlebar {
+    display: flex; align-items: center; gap: 8px; padding: 10px 14px;
+    background: linear-gradient(180deg, #F1F1F4, #E7E7EC); border-bottom: 1px solid var(--border);
+  }
+  .mac-terminal .dot { width: 11px; height: 11px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); }
+  .mac-terminal .dot.red { background: #FF5F56; }
+  .mac-terminal .dot.yellow { background: #FFBD2E; }
+  .mac-terminal .dot.green { background: #27C93F; }
+  .mac-terminal .fname { flex: 1; text-align: center; font-size: 12px; color: var(--text-muted); font-family: var(--font-ui); font-weight: 600; }
+  .mac-terminal pre {
+    margin: 0; padding: 18px 20px; font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 12.5px; line-height: 1.7; color: #1E293B; background: #FBFBFD; overflow-x: auto;
+  }
+  .mac-terminal .prompt { color: var(--good); }
+  .mac-terminal .comment { color: var(--text-muted); }
+
+  /* ---- FAQ ---- */
+  details.faq { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+  details.faq summary {
+    cursor: pointer; padding: 14px 18px; font-family: var(--font-ui); font-weight: 700; font-size: 13.5px;
+    background: var(--surface-2); list-style: none; display: flex; align-items: center; justify-content: space-between;
+  }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq summary::after { content: "+"; font-size: 18px; color: var(--accent); font-family: var(--font-ui); }
+  details.faq[open] summary::after { content: "\2212"; }
+  details.faq .faq-a { padding: 14px 18px; color: var(--text-secondary); }
+
+  footer.page-foot { text-align: center; color: var(--text-muted); font-size: 12px; padding: 30px 24px; font-family: var(--font-ui); }
+  footer.page-foot a { color: var(--accent); text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<nav class="top-nav" id="siteNav" data-active="information"></nav>
+
+<main>
+
+  <!-- ============ How to use ============ -->
+  <section class="block">
+    <h2>How to use this dashboard for the best information gain</h2>
+    <p class="lede">Five habits that get you from "looking at charts" to "finding the finding."</p>
+    <ol class="howto-list">
+      <li>Start on <strong>Overview</strong> for the headline numbers -- transaction volume, value, success rate, chargeback count -- before drilling into any one page.</li>
+      <li>Use the left-rail <strong>slicers</strong> to narrow by date, category, or status; every KPI and chart on that page updates together, so comparisons stay apples-to-apples.</li>
+      <li>Don't just read a number -- <strong>ask the chatbot</strong> the same question in plain English to see the exact SQL and joined tables behind it.</li>
+      <li>Check the <a href="workflow.html">Workflow page</a> once to understand how raw files became this data model -- it makes every KPI's caveats obvious (e.g. why "no matching merchant" is its own category).</li>
+      <li>Finish on <strong>Fraud-Ring Spotlight</strong> -- it's built specifically to surface the merchants and users an averages-only view would hide.</li>
+    </ol>
+  </section>
+
+  <!-- ============ Git repo structure ============ -->
+  <section class="block">
+    <h2>File structure -- Git repository</h2>
+    <p class="lede">Everything this project publishes, laid out top to bottom.</p>
+    <div class="mac-terminal">
+      <div class="titlebar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="fname">Datathon — tree</span></div>
+      <pre><span class="prompt">$</span> tree -L 2
+Datathon/
+<span class="comment">├── data/</span>
+<span class="comment">│   ├── raw/                     # not published (unmasked KYC data)</span>
+<span class="comment">│   └── cleaned/                 # analytics-ready star schema</span>
+├── scripts/
+│   ├── clean_pipeline.py        # raw -&gt; cleaned star schema
+│   ├── compute_metrics.py       # cleaned tables -&gt; reports + dashboard data
+│   ├── build_dashboard.py       # data.json + template -&gt; dashboard/index.html
+│   └── build_powerbi_project.py # cleaned tables -&gt; native Power BI project
+├── reports/
+│   ├── data_quality_report.md
+│   ├── business_metrics_summary.md
+│   └── cleaning_mapping_reference.md
+├── dashboard/                   # offline HTML dashboard (Chart.js)
+├── powerbi/                     # native Power BI Project (TMDL + report.json)
+├── agent/                       # the chatbot -- see next panel
+├── webapp/                      # this website (dashboard/workflow/team/info)
+├── .env.example
+├── requirements.txt
+└── README.md</pre>
+    </div>
+  </section>
+
+  <!-- ============ Chatbot structure ============ -->
+  <section class="block">
+    <h2>File structure -- the chatbot</h2>
+    <p class="lede">A local, read-only text-to-SQL agent -- 21 vetted templates first, OpenRouter LLM as fallback.</p>
+    <div class="mac-terminal">
+      <div class="titlebar"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span><span class="fname">agent — tree</span></div>
+      <pre><span class="prompt">$</span> tree agent/
+agent/
+├── build_db.py            <span class="comment"># cleaned CSVs -&gt; analytics.db (SQLite)</span>
+├── nlsql.py                <span class="comment"># question -&gt; SQL, 21 local templates</span>
+├── openrouter_client.py    <span class="comment"># optional LLM fallback, same safety rules</span>
+├── safety.py                <span class="comment"># is_read_only() guardrail (both paths)</span>
+├── app.py                    <span class="comment"># FastAPI backend, POST /ask</span>
+├── frontend.py                <span class="comment"># Streamlit UI (chart + SQL + answer)</span>
+├── analytics.db                <span class="comment"># generated, gitignored</span>
+└── README.md</pre>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="block">
+    <h2>FAQ</h2>
+    <details class="faq" open>
+      <summary>Is any of this real customer data?</summary>
+      <div class="faq-a">No -- it's a deliberately messy <em>synthetic</em> dataset built for the datathon. PAN and Aadhaar-shaped fields are masked regardless.</div>
+    </details>
+    <details class="faq">
+      <summary>How does the chatbot avoid making numbers up?</summary>
+      <div class="faq-a">Every answer runs a real, read-only SQL query first (checked by <code>is_read_only()</code>), then a second call turns the actual returned rows into a sentence -- it never answers from "memory."</div>
+    </details>
+    <details class="faq">
+      <summary>What's the difference between a "local template" and "OpenRouter" answer?</summary>
+      <div class="faq-a">21 common questions are answered by fixed, hand-checked SQL templates -- free, instant, zero network calls. Anything else falls back to an LLM call via OpenRouter, which plans its own SQL but must still pass the same safety check.</div>
+    </details>
+    <details class="faq">
+      <summary>Why do some charts show a "No Matching Merchant/Customer" category?</summary>
+      <div class="faq-a">Only ~48% of transactions match a real merchant record and ~32% match a real customer record -- that's an intentional feature of this dataset, not a bug. Rather than hide it, every join gap is its own labelled category.</div>
+    </details>
+    <details class="faq">
+      <summary>Can I trust the Power BI numbers to match the chatbot's numbers?</summary>
+      <div class="faq-a">Yes -- both read the exact same four cleaned CSVs (<code>data/cleaned/</code>). There's only one source of truth in this project.</div>
+    </details>
+    <details class="faq">
+      <summary>How do I re-run the whole pipeline myself?</summary>
+      <div class="faq-a">See the root <code>README.md</code> -- in short: <code>python3 scripts/clean_pipeline.py</code> then <code>compute_metrics.py</code>, <code>build_dashboard.py</code>, <code>build_powerbi_project.py</code>, and <code>agent/build_db.py</code>.</div>
+    </details>
+  </section>
+
+</main>
+
+<footer class="page-foot">
+  TR-1: Analytics of TransOrg &middot; <a href="https://github.com/Manudevchhiller/Datathon" target="_blank" rel="noopener">View source on GitHub</a>
+</footer>
+
+<script>
+  window.CHAT_CONFIG = { API_BASE_URL: window.location.protocol + "//" + window.location.hostname + ":8000" };
+</script>
+<script src="nav-bar.js"></script>
+<script src="chat-widget.js"></script>
+</body>
+</html>

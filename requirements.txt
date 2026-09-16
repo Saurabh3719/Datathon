@@ -1,0 +1,8 @@
+pandas>=2.2
+numpy>=1.26
+fastapi>=0.110
+uvicorn[standard]>=0.29
+streamlit>=1.32
+plotly>=5.20
+requests>=2.31
+python-dotenv>=1.0

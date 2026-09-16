@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UPI Fraud &amp; Merchant Risk Analytics</title>
+<script src="chart.umd.min.js"></script>
+<style>
+  :root, .viz-root {
+    color-scheme: dark;
+    /* Dark FinTech / Cyber-Risk palette */
+    --page:           #0B0F17;
+    --surface-1:      #161C26;
+    --surface-1-t:    rgba(22, 28, 38, 0.72);
+    --border:         rgba(255, 255, 255, 0.08);
+    --border-strong:  rgba(255, 255, 255, 0.16);
+    --text-primary:   #F8FAFC;
+    --text-secondary: #94A3B8;
+    --text-muted:     #64748B;
+    --grid:           rgba(255, 255, 255, 0.07);
+    --baseline:       rgba(255, 255, 255, 0.16);
+
+    --accent:         #6366F1; /* electric indigo */
+    --accent-2:       #06B6D4; /* cyber cyan */
+    --good:           #10B981; /* emerald mint */
+    --warning:        #F59E0B; /* amber gold */
+    --critical:       #EF4444; /* coral crimson */
+
+    --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
+    --shadow-risk: 0 0 15px rgba(239, 68, 68, 0.25);
+
+    --s1: #6366F1; --s2: #06B6D4; --s3: #10B981; --s4: #F59E0B;
+    --s5: #EF4444; --s6: #A78BFA; --s7: #F472B6; --s8: #64748B;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--text-primary);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding: 24px 16px 64px;
+    background:
+      radial-gradient(1100px 600px at 12% -10%, rgba(99, 102, 241, 0.16), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(6, 182, 212, 0.10), transparent 55%),
+      radial-gradient(1000px 700px at 50% 110%, rgba(99, 102, 241, 0.08), transparent 60%),
+      var(--page);
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  header.page-head { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+  header.page-head .head-text { flex: 1; min-width: 260px; }
+  header.page-head h1 {
+    font-size: 27px; margin: 0 0 8px; font-weight: 700; letter-spacing: -0.01em;
+    background: linear-gradient(90deg, var(--text-primary), var(--accent-2) 120%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header.page-head p { margin: 0; color: var(--text-secondary); font-size: 14px; max-width: 780px; line-height: 1.6; }
+  .meta-row { margin-top: 12px; font-size: 12px; color: var(--text-muted); display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+  .meta-row span.divider { opacity: .4; }
+
+  .head-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
+
+  /* ---- Live risk badge (pulse) ------------------------------------------- */
+  .risk-badge {
+    display: inline-flex; align-items: center; gap: 9px; padding: 7px 16px 7px 12px;
+    border-radius: 999px; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #FCA5A5; font-size: 12.5px; font-weight: 600; white-space: nowrap;
+  }
+  .risk-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--critical); flex-shrink: 0; animation: pulseDot 2.2s infinite; }
+  @keyframes pulseDot {
+    0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55); }
+    70%  { box-shadow: 0 0 0 9px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+  }
+
+  /* ---- Buttons ------------------------------------------------------------ */
+  .btn-filter {
+    display: inline-flex; align-items: center; gap: 8px; background: var(--surface-1);
+    border: 1px solid var(--border); color: var(--text-primary); padding: 9px 16px;
+    border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: all 0.2s ease; box-shadow: var(--shadow-card);
+  }
+  .btn-filter:hover { border-color: var(--accent); color: #fff; transform: translateY(-2px); }
+  .btn-filter svg { width: 14px; height: 14px; }
+  .btn-filter .badge-count {
+    background: var(--accent); color: #fff; border-radius: 999px; font-size: 10.5px;
+    padding: 1px 6px; min-width: 16px; text-align: center;
+  }
+
+  .btn-primary {
+    background: var(--accent); color: #fff; border: none; padding: 10px 18px; border-radius: 10px;
+    font-weight: 600; cursor: pointer; flex: 1; transition: all 0.2s ease; font-size: 13.5px;
+  }
+  .btn-primary:hover { filter: brightness(1.12); transform: translateY(-2px); box-shadow: 0 6px 18px -4px rgba(99, 102, 241, 0.55); }
+  .btn-ghost {
+    background: transparent; color: var(--text-secondary); border: 1px solid var(--border);
+    padding: 10px 18px; border-radius: 10px; cursor: pointer; transition: all 0.2s ease; font-size: 13.5px;
+  }
+  .btn-ghost:hover { border-color: var(--text-secondary); color: var(--text-primary); transform: translateY(-2px); }
+
+  /* ---- Filter panel --------------------------------------------------------- */
+  .filter-overlay {
+    position: fixed; inset: 0; background: rgba(3, 5, 9, 0.6); backdrop-filter: blur(2px);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 40;
+  }
+  .filter-overlay.open { opacity: 1; pointer-events: auto; }
+  .filter-panel {
+    position: fixed; top: 0; right: 0; height: 100%; width: 360px; max-width: 92vw;
+    background: #11151F; border-left: 1px solid var(--border-strong);
+    box-shadow: -20px 0 40px rgba(0, 0, 0, 0.5); transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(.22,.9,.32,1); z-index: 50; display: flex; flex-direction: column;
+  }
+  .filter-panel.open { transform: translateX(0); }
+  .filter-panel-head { display: flex; justify-content: space-between; align-items: center; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+  .filter-panel-head h3 { margin: 0; font-size: 15.5px; }
+  .icon-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: all .2s ease; }
+  .icon-btn:hover { color: var(--text-primary); background: var(--border); }
+  .filter-panel-body { padding: 18px 22px; overflow-y: auto; flex: 1; }
+  .filter-group { margin-bottom: 22px; }
+  .filter-group label.group-label { display: block; font-size: 11.5px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 10px; }
+  .filter-hint { font-size: 11.5px; color: var(--text-muted); margin: 8px 0 0; line-height: 1.5; }
+  .date-inputs { display: flex; align-items: center; gap: 8px; }
+  .date-inputs input {
+    background: var(--surface-1); border: 1px solid var(--border); color: var(--text-primary);
+    border-radius: 8px; padding: 7px 9px; font-size: 12.5px; flex: 1; color-scheme: dark;
+  }
+  .date-inputs input:focus, .date-inputs input:focus-visible { outline: none; border-color: var(--accent); }
+  .date-inputs span { color: var(--text-muted); font-size: 11px; }
+  .checkbox-list { display: flex; flex-wrap: wrap; gap: 7px; }
+  .checkbox-list label.chip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
+    border: 1px solid var(--border); font-size: 12px; cursor: pointer; background: rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease; color: var(--text-secondary);
+  }
+  .checkbox-list label.chip:hover { border-color: var(--border-strong); color: var(--text-primary); }
+  .checkbox-list label.chip:has(input:checked) { border-color: var(--accent); color: var(--text-primary); background: rgba(99, 102, 241, 0.12); }
+  .checkbox-list input { accent-color: var(--accent); }
+  .filter-panel-foot { display: flex; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--border); }
+
+  section { margin-bottom: 36px; }
+  section > h2 { font-size: 17px; margin: 0 0 4px; font-weight: 650; }
+  section > .section-sub { font-size: 13px; color: var(--text-secondary); margin: 0 0 14px; max-width: 820px; line-height: 1.55; }
+
+  /* ---- Fade-up stagger on load ---------------------------------------------- */
+  .fade-up { opacity: 0; transform: translateY(14px); animation: fadeUp 0.55s ease-out forwards; }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(176px, 1fr)); gap: 12px; }
+  .tile {
+    background: var(--surface-1-t); backdrop-filter: blur(10px); border: 1px solid var(--border);
+    border-radius: 14px; padding: 15px 17px; box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  .tile:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+  .tile .label { font-size: 11.5px; color: var(--text-secondary); margin-bottom: 7px; }
+  .tile .value-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .tile .value { font-size: 23px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+  .tile .sub { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; }
+  .tile.flag { border-color: rgba(239, 68, 68, 0.35); box-shadow: var(--shadow-card), var(--shadow-risk); }
+  .tile.flag .value { color: var(--critical); }
+  .tile.good .value { color: var(--good); }
+
+  .delta { display: inline-flex; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
+  .delta.up.is-good { color: var(--good); background: rgba(16, 185, 129, 0.12); }
+  .delta.up.is-bad { color: var(--critical); background: rgba(239, 68, 68, 0.12); }
+  .delta.down.is-good { color: var(--good); background: rgba(16, 185, 129, 0.12); }
+  .delta.down.is-bad { color: var(--critical); background: rgba(239, 68, 68, 0.12); }
+  .delta.flat { color: var(--text-muted); background: rgba(255, 255, 255, 0.06); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface-1-t); backdrop-filter: blur(10px); border: 1px solid var(--border);
+    border-radius: 16px; padding: 17px; box-shadow: var(--shadow-card);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--border-strong); }
+  .card h3 { font-size: 13.5px; margin: 0 0 2px; font-weight: 650; }
+  .card .card-sub { font-size: 11.5px; color: var(--text-muted); margin: 0 0 10px; }
+  .card canvas { max-height: 260px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 8px 9px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th { color: var(--text-secondary); font-weight: 650; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tr:last-child td { border-bottom: none; }
+  tr { transition: background 0.15s ease; }
+  tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+  .table-wrap { overflow-x: auto; }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 650; }
+  .pill.critical { background: rgba(239, 68, 68, 0.15); color: #FCA5A5; }
+  .pill.warning { background: rgba(245, 158, 11, 0.18); color: #FCD34D; }
+  .pill.good { background: rgba(16, 185, 129, 0.15); color: #6EE7B7; }
+
+  .callout {
+    border-left: 3px solid var(--accent-2); padding: 12px 16px;
+    background: linear-gradient(90deg, rgba(6, 182, 212, 0.08), transparent 70%);
+    border-radius: 0 12px 12px 0; font-size: 13px; line-height: 1.6; color: var(--text-primary);
+  }
+  .callout strong { color: var(--accent-2); }
+
+  footer { margin-top: 40px; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 16px; line-height: 1.6; }
+  footer a { color: var(--accent-2); }
+  code { background: rgba(255, 255, 255, 0.06); padding: 1px 5px; border-radius: 4px; font-size: 11.5px; color: var(--text-secondary); }
+
+  /* ---- Chart.js HTML tooltip (glassmorphic) --------------------------------- */
+  .chartjs-tooltip {
+    position: absolute; pointer-events: none; z-index: 30; opacity: 0;
+    transition: opacity 0.12s ease, transform 0.12s ease; transform: translate(-50%, calc(-100% - 10px));
+    background: rgba(17, 21, 31, 0.72); backdrop-filter: blur(10px); border: 1px solid var(--border-strong);
+    border-radius: 10px; padding: 8px 12px; box-shadow: var(--shadow-card); font-size: 12px; white-space: nowrap;
+  }
+  .chartjs-tooltip .tt-title { color: var(--text-secondary); font-size: 10.5px; margin-bottom: 3px; text-transform: uppercase; letter-spacing: .03em; }
+  .chartjs-tooltip .tt-row { display: flex; align-items: center; gap: 6px; color: var(--text-primary); font-weight: 650; }
+  .chartjs-tooltip .tt-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="page-head">
+    <div class="head-text">
+      <h1>UPI Fraud &amp; Merchant Risk Analytics</h1>
+      <p>Track 1 — FinTech &amp; BFSI. Built on the cleaned, join-validated star schema
+        (<code>dim_customers</code>, <code>dim_merchants</code>, <code>fact_transactions</code>,
+        <code>fact_chargebacks</code>). Every figure below traces back to
+        <code>scripts/clean_pipeline.py</code> and <code>scripts/compute_metrics.py</code> in the repo.</p>
+      <div class="meta-row">
+        <span id="meta-range"></span>
+        <span class="divider">·</span>
+        <span id="meta-txn"></span>
+        <span class="divider">·</span>
+        <span id="meta-cb"></span>
+      </div>
+    </div>
+    <div class="head-actions">
+      <div class="risk-badge" id="risk-badge"><span class="risk-dot"></span><span id="risk-badge-text">Loading…</span></div>
+      <button id="filters-toggle" class="btn-filter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M8 12h8M11 18h2"/></svg>
+        Filters
+        <span class="badge-count" id="filter-count" style="display:none;">0</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="filter-overlay" id="filter-overlay"></div>
+  <aside class="filter-panel" id="filter-panel">
+    <div class="filter-panel-head">
+      <h3>Filters</h3>
+      <button class="icon-btn" id="filter-close">✕</button>
+    </div>
+    <div class="filter-panel-body">
+      <div class="filter-group">
+        <label class="group-label">Date range</label>
+        <div class="date-inputs">
+          <input type="date" id="filter-date-start" />
+          <span>to</span>
+          <input type="date" id="filter-date-end" />
+        </div>
+        <p class="filter-hint">Applies to transaction-volume KPIs and the daily trend charts. Chargeback/KYC metrics reflect the full window (those tables aren't date-keyed in the pre-aggregated data).</p>
+      </div>
+      <div class="filter-group">
+        <label class="group-label">Merchant category</label>
+        <div class="checkbox-list" id="filter-categories"></div>
+      </div>
+      <div class="filter-group">
+        <label class="group-label">Chargeback reason</label>
+        <div class="checkbox-list" id="filter-reasons"></div>
+      </div>
+      <div class="filter-group">
+        <label class="group-label">Severity</label>
+        <div class="checkbox-list" id="filter-severities"></div>
+      </div>
+      <div class="filter-group">
+        <label class="group-label">KYC status</label>
+        <div class="checkbox-list" id="filter-kyc"></div>
+      </div>
+    </div>
+    <div class="filter-panel-foot">
+      <button class="btn-ghost" id="filter-reset">Reset</button>
+      <button class="btn-primary" id="filter-apply">Apply</button>
+    </div>
+  </aside>
+
+  <section>
+    <h2>Headline KPIs</h2>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </section>
+
+  <section>
+    <h2>Volume &amp; Outcome Trend</h2>
+    <p class="section-sub">Daily transaction volume, value, and hourly failure rate across the observed window.</p>
+    <div class="grid-3">
+      <div class="card"><h3>Daily transaction count</h3><p class="card-sub">All statuses</p><canvas id="chart-daily-count"></canvas></div>
+      <div class="card"><h3>Daily transaction value</h3><p class="card-sub">₹, all statuses</p><canvas id="chart-daily-amount"></canvas></div>
+      <div class="card"><h3>Failed-transaction rate by hour</h3><p class="card-sub">Share of attempts that failed</p><canvas id="chart-hourly-fail"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Merchant Category Performance</h2>
+    <p class="section-sub">Transaction value and dispute intensity by merchant category. "Unmatched" = transactions whose merchant_id has no master-data record (see Data Quality section).</p>
+    <div class="grid-2">
+      <div class="card"><h3>Transaction amount by category</h3><p class="card-sub">Top categories, ₹</p><canvas id="chart-cat-amount"></canvas></div>
+      <div class="card"><h3>Chargeback-to-transaction ratio by category</h3><p class="card-sub">Dispute count ÷ transaction count</p><canvas id="chart-cat-ratio"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Chargeback &amp; Dispute Composition</h2>
+    <div class="grid-3">
+      <div class="card"><h3>Reason code distribution</h3><p class="card-sub">Consolidated into 7 canonical categories</p><canvas id="chart-reason"></canvas></div>
+      <div class="card"><h3>Severity distribution</h3><canvas id="chart-severity"></canvas></div>
+      <div class="card"><h3>Resolution status</h3><canvas id="chart-resolution"></canvas></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Fraud-Ring Spotlight</h2>
+    <p class="section-sub">A small number of merchants carry chargeback volume wildly disproportionate to their recorded transaction history — the clearest fraud-ring signal in this dataset.</p>
+    <div class="callout" id="fraud-callout"></div>
+    <br/>
+    <div class="grid-2">
+      <div class="card table-wrap">
+        <h3>Top merchants by chargeback count</h3>
+        <p class="card-sub">Ranked among merchants with a valid master-data record</p>
+        <table id="table-top-cb-count"></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Highest chargeback-to-transaction ratio</h3>
+        <p class="card-sub">Min. 3 disputes, min. 5 matched transactions</p>
+        <table id="table-top-cb-ratio"></table>
+      </div>
+    </div>
+    <br/>
+    <div class="card table-wrap">
+      <h3>Merchant same-day transaction spikes</h3>
+      <p class="card-sub">2+ transactions in a single day — anomalous against this population's ~1-transaction-per-90-days norm</p>
+      <table id="table-spikes"></table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Customer Risk</h2>
+    <div class="grid-3">
+      <div class="card"><h3>KYC status distribution</h3><canvas id="chart-kyc"></canvas></div>
+      <div class="card"><h3>Risk segment distribution</h3><canvas id="chart-risk"></canvas></div>
+      <div class="card"><h3>Dispute rate by KYC status</h3><p class="card-sub">Chargebacks ÷ transactions, per status</p><canvas id="chart-kyc-dispute"></canvas></div>
+    </div>
+    <br/>
+    <div class="grid-2">
+      <div class="card table-wrap">
+        <h3>Repeat-dispute users</h3>
+        <p class="card-sub">Users with 2+ chargebacks</p>
+        <table id="table-high-risk-users"></table>
+      </div>
+      <div class="card table-wrap">
+        <h3>Highest-value chargebacks</h3>
+        <table id="table-high-value-cb"></table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Data Quality &amp; Join Integrity</h2>
+    <p class="section-sub">These are load-bearing for every metric above — a metric computed only on matched rows understates true exposure, so the gaps themselves are reported as findings, not swept into an aggregate.</p>
+    <div class="kpi-grid" id="dq-grid"></div>
+  </section>
+
+  <footer>
+    Generated from the synthetic Track 1 dataset for the TransOrg AgentIQ Datathon. Source, cleaning
+    pipeline, data-quality report, and Power BI build notes live alongside this file in the repository
+    under <code>scripts/</code>, <code>reports/</code>, and <code>dashboard/powerbi_guide.md</code>.
+  </footer>
+
+</div>
+
+<script id="dashboard-data" type="application/json">{"kpi": {"total_txn": 20000, "total_amount_all": 249772508.82, "total_amount_success": 170844515.41, "avg_txn_value_all": 12488.625441, "avg_txn_value_success": 12535.366894856556, "success_rate": 0.68145, "failed_rate": 0.07765, "pending_rate": 0.2409, "utr_missing_rate": 0.05, "utr_invalid_rate": 0.0, "cb_count": 2800, "cb_amount": 8001120.800000001, "cb_to_txn_ratio": 0.14, "cb_to_txn_amount_ratio": 0.03203363267558823, "avg_delay_days": 6.540350877192982, "delayed_7d_count": 524, "unmatched_merchant_cb_count": 1501, "unmatched_merchant_cb_amount": 4289489.039999999, "kyc_completion_rate": 0.6442946058091287, "kyc_rejection_rate": 0.08150069156293223, "user_fk_valid_rate": 0.3239, "merchant_fk_valid_rate": 0.48155, "txn_fk_valid_rate_cb": 0.9310714285714285, "spike_then_dispute_count": 8}, "daily_trend": [{"date": "2026-01-01", "txn_count": 215, "txn_amount": 2575926.9, "failed_count": 18, "pending_count": 44, "success_count": 153}, {"date": "2026-01-02", "txn_count": 200, "txn_amount": 2544706.52, "failed_count": 20, "pending_count": 49, "success_count": 131}, {"date": "2026-01-03", "txn_count": 201, "txn_amount": 2483057.89, "failed_count": 14, "pending_count": 55, "success_count": 132}, {"date": "2026-01-04", "txn_count": 218, "txn_amount": 2866277.6, "failed_count": 19, "pending_count": 56, "success_count": 143}, {"date": "2026-01-05", "txn_count": 206, "txn_amount": 2433196.66, "failed_count": 14, "pending_count": 58, "success_count": 134}, {"date": "2026-01-06", "txn_count": 226, "txn_amount": 2891322.21, "failed_count": 30, "pending_count": 62, "success_count": 134}, {"date": "2026-01-07", "txn_count": 210, "txn_amount": 2552840.56, "failed_count": 11, "pending_count": 45, "success_count": 154}, {"date": "2026-01-08", "txn_count": 225, "txn_amount": 2922810.98, "failed_count": 20, "pending_count": 51, "success_count": 154}, {"date": "2026-01-09", "txn_count": 238, "txn_amount": 3054746.77, "failed_count": 15, "pending_count": 62, "success_count": 161}, {"date": "2026-01-10", "txn_count": 249, "txn_amount": 3103204.56, "failed_count": 18, "pending_count": 51, "success_count": 180}, {"date": "2026-01-11", "txn_count": 228, "txn_amount": 2824447.75, "failed_count": 17, "pending_count": 50, "success_count": 161}, {"date": "2026-01-12", "txn_count": 251, "txn_amount": 3183626.3, "failed_count": 15, "pending_count": 64, "success_count": 172}, {"date": "2026-01-13", "txn_count": 233, "txn_amount": 2985484.28, "failed_count": 17, "pending_count": 61, "success_count": 155}, {"date": "2026-01-14", "txn_count": 245, "txn_amount": 3109633.4, "failed_count": 17, "pending_count": 68, "success_count": 160}, {"date": "2026-01-15", "txn_count": 233, "txn_amount": 2877372.75, "failed_count": 19, "pending_count": 47, "success_count": 167}, {"date": "2026-01-16", "txn_count": 211, "txn_amount": 2663063.0, "failed_count": 17, "pending_count": 42, "success_count": 152}, {"date": "2026-01-17", "txn_count": 213, "txn_amount": 2512853.52, "failed_count": 18, "pending_count": 45, "success_count": 150}, {"date": "2026-01-18", "txn_count": 226, "txn_amount": 2827685.78, "failed_count": 17, "pending_count": 53, "success_count": 156}, {"date": "2026-01-19", "txn_count": 214, "txn_amount": 2711299.49, "failed_count": 18, "pending_count": 56, "success_count": 140}, {"date": "2026-01-20", "txn_count": 218, "txn_amount": 2534569.21, "failed_count": 14, "pending_count": 43, "success_count": 161}, {"date": "2026-01-21", "txn_count": 207, "txn_amount": 2715006.07, "failed_count": 12, "pending_count": 47, "success_count": 148}, {"date": "2026-01-22", "txn_count": 222, "txn_amount": 2682512.1, "failed_count": 17, "pending_count": 51, "success_count": 154}, {"date": "2026-01-23", "txn_count": 202, "txn_amount": 2551255.4899999998, "failed_count": 19, "pending_count": 48, "success_count": 135}, {"date": "2026-01-24", "txn_count": 206, "txn_amount": 2490483.6, "failed_count": 12, "pending_count": 48, "success_count": 146}, {"date": "2026-01-25", "txn_count": 202, "txn_amount": 2723841.48, "failed_count": 11, "pending_count": 52, "success_count": 139}, {"date": "2026-01-26", "txn_count": 215, "txn_amount": 2635656.33, "failed_count": 25, "pending_count": 50, "success_count": 140}, {"date": "2026-01-27", "txn_count": 224, "txn_amount": 2978100.29, "failed_count": 20, "pending_count": 61, "success_count": 143}, {"date": "2026-01-28", "txn_count": 232, "txn_amount": 2869925.04, "failed_count": 17, "pending_count": 55, "success_count": 160}, {"date": "2026-01-29", "txn_count": 217, "txn_amount": 2493578.23, "failed_count": 16, "pending_count": 59, "success_count": 142}, {"date": "2026-01-30", "txn_count": 242, "txn_amount": 2988846.28, "failed_count": 18, "pending_count": 50, "success_count": 174}, {"date": "2026-01-31", "txn_count": 236, "txn_amount": 2683907.54, "failed_count": 23, "pending_count": 51, "success_count": 162}, {"date": "2026-02-01", "txn_count": 215, "txn_amount": 2656525.02, "failed_count": 13, "pending_count": 59, "success_count": 143}, {"date": "2026-02-02", "txn_count": 218, "txn_amount": 2834826.69, "failed_count": 15, "pending_count": 61, "success_count": 142}, {"date": "2026-02-03", "txn_count": 200, "txn_amount": 2449156.4, "failed_count": 19, "pending_count": 52, "success_count": 129}, {"date": "2026-02-04", "txn_count": 216, "txn_amount": 2633029.93, "failed_count": 12, "pending_count": 65, "success_count": 139}, {"date": "2026-02-05", "txn_count": 213, "txn_amount": 2526272.72, "failed_count": 15, "pending_count": 48, "success_count": 150}, {"date": "2026-02-06", "txn_count": 242, "txn_amount": 2849778.92, "failed_count": 25, "pending_count": 61, "success_count": 156}, {"date": "2026-02-07", "txn_count": 241, "txn_amount": 2867183.77, "failed_count": 18, "pending_count": 67, "success_count": 156}, {"date": "2026-02-08", "txn_count": 219, "txn_amount": 2762862.74, "failed_count": 18, "pending_count": 63, "success_count": 138}, {"date": "2026-02-09", "txn_count": 198, "txn_amount": 2356472.67, "failed_count": 18, "pending_count": 58, "success_count": 122}, {"date": "2026-02-10", "txn_count": 234, "txn_amount": 2960583.57, "failed_count": 19, "pending_count": 49, "success_count": 166}, {"date": "2026-02-11", "txn_count": 242, "txn_amount": 3095032.48, "failed_count": 23, "pending_count": 58, "success_count": 161}, {"date": "2026-02-12", "txn_count": 224, "txn_amount": 2880771.12, "failed_count": 23, "pending_count": 58, "success_count": 143}, {"date": "2026-02-13", "txn_count": 221, "txn_amount": 2893265.95, "failed_count": 19, "pending_count": 50, "success_count": 152}, {"date": "2026-02-14", "txn_count": 237, "txn_amount": 3212576.61, "failed_count": 24, "pending_count": 60, "success_count": 153}, {"date": "2026-02-15", "txn_count": 213, "txn_amount": 2559116.8, "failed_count": 19, "pending_count": 48, "success_count": 146}, {"date": "2026-02-16", "txn_count": 222, "txn_amount": 2764266.89, "failed_count": 11, "pending_count": 52, "success_count": 159}, {"date": "2026-02-17", "txn_count": 249, "txn_amount": 3061539.75, "failed_count": 22, "pending_count": 64, "success_count": 163}, {"date": "2026-02-18", "txn_count": 227, "txn_amount": 2829722.45, "failed_count": 20, "pending_count": 47, "success_count": 160}, {"date": "2026-02-19", "txn_count": 203, "txn_amount": 2588636.44, "failed_count": 19, "pending_count": 43, "success_count": 141}, {"date": "2026-02-20", "txn_count": 223, "txn_amount": 2729407.0, "failed_count": 15, "pending_count": 40, "success_count": 168}, {"date": "2026-02-21", "txn_count": 208, "txn_amount": 2560216.25, "failed_count": 11, "pending_count": 62, "success_count": 135}, {"date": "2026-02-22", "txn_count": 214, "txn_amount": 2705578.14, "failed_count": 12, "pending_count": 44, "success_count": 158}, {"date": "2026-02-23", "txn_count": 226, "txn_amount": 2876116.73, "failed_count": 19, "pending_count": 57, "success_count": 150}, {"date": "2026-02-24", "txn_count": 220, "txn_amount": 2591033.91, "failed_count": 16, "pending_count": 51, "success_count": 153}, {"date": "2026-02-25", "txn_count": 243, "txn_amount": 2933767.94, "failed_count": 20, "pending_count": 59, "success_count": 164}, {"date": "2026-02-26", "txn_count": 214, "txn_amount": 2753453.34, "failed_count": 19, "pending_count": 45, "success_count": 150}, {"date": "2026-02-27", "txn_count": 221, "txn_amount": 2838271.11, "failed_count": 11, "pending_count": 57, "success_count": 153}, {"date": "2026-02-28", "txn_count": 226, "txn_amount": 2865798.97, "failed_count": 14, "pending_count": 52, "success_count": 160}, {"date": "2026-03-01", "txn_count": 223, "txn_amount": 2874021.11, "failed_count": 8, "pending_count": 55, "success_count": 160}, {"date": "2026-03-02", "txn_count": 211, "txn_amount": 2491180.29, "failed_count": 25, "pending_count": 43, "success_count": 143}, {"date": "2026-03-03", "txn_count": 218, "txn_amount": 2798853.24, "failed_count": 19, "pending_count": 56, "success_count": 143}, {"date": "2026-03-04", "txn_count": 239, "txn_amount": 2840860.38, "failed_count": 16, "pending_count": 64, "success_count": 159}, {"date": "2026-03-05", "txn_count": 245, "txn_amount": 3113358.11, "failed_count": 16, "pending_count": 64, "success_count": 165}, {"date": "2026-03-06", "txn_count": 226, "txn_amount": 2825908.2199999997, "failed_count": 18, "pending_count": 56, "success_count": 152}, {"date": "2026-03-07", "txn_count": 235, "txn_amount": 2862092.99, "failed_count": 15, "pending_count": 64, "success_count": 156}, {"date": "2026-03-08", "txn_count": 245, "txn_amount": 3099825.88, "failed_count": 16, "pending_count": 66, "success_count": 163}, {"date": "2026-03-09", "txn_count": 242, "txn_amount": 3101692.14, "failed_count": 16, "pending_count": 45, "success_count": 181}, {"date": "2026-03-10", "txn_count": 232, "txn_amount": 2997781.27, "failed_count": 19, "pending_count": 54, "success_count": 159}, {"date": "2026-03-11", "txn_count": 211, "txn_amount": 2589810.87, "failed_count": 18, "pending_count": 56, "success_count": 137}, {"date": "2026-03-12", "txn_count": 232, "txn_amount": 2879785.58, "failed_count": 9, "pending_count": 57, "success_count": 166}, {"date": "2026-03-13", "txn_count": 240, "txn_amount": 2941135.01, "failed_count": 23, "pending_count": 58, "success_count": 159}, {"date": "2026-03-14", "txn_count": 216, "txn_amount": 2637436.0, "failed_count": 20, "pending_count": 52, "success_count": 144}, {"date": "2026-03-15", "txn_count": 209, "txn_amount": 2503531.83, "failed_count": 8, "pending_count": 55, "success_count": 146}, {"date": "2026-03-16", "txn_count": 254, "txn_amount": 3431125.78, "failed_count": 21, "pending_count": 68, "success_count": 165}, {"date": "2026-03-17", "txn_count": 209, "txn_amount": 2541495.96, "failed_count": 18, "pending_count": 39, "success_count": 152}, {"date": "2026-03-18", "txn_count": 231, "txn_amount": 2962283.14, "failed_count": 22, "pending_count": 48, "success_count": 161}, {"date": "2026-03-19", "txn_count": 216, "txn_amount": 2808786.17, "failed_count": 14, "pending_count": 58, "success_count": 144}, {"date": "2026-03-20", "txn_count": 232, "txn_amount": 2622604.1, "failed_count": 20, "pending_count": 55, "success_count": 157}, {"date": "2026-03-21", "txn_count": 226, "txn_amount": 2887767.41, "failed_count": 22, "pending_count": 46, "success_count": 158}, {"date": "2026-03-22", "txn_count": 198, "txn_amount": 2598449.7, "failed_count": 16, "pending_count": 52, "success_count": 130}, {"date": "2026-03-23", "txn_count": 206, "txn_amount": 2728964.83, "failed_count": 10, "pending_count": 55, "success_count": 141}, {"date": "2026-03-24", "txn_count": 216, "txn_amount": 2818448.46, "failed_count": 16, "pending_count": 50, "success_count": 150}, {"date": "2026-03-25", "txn_count": 213, "txn_amount": 2735920.65, "failed_count": 16, "pending_count": 47, "success_count": 150}, {"date": "2026-03-26", "txn_count": 214, "txn_amount": 2814969.81, "failed_count": 16, "pending_count": 59, "success_count": 139}, {"date": "2026-03-27", "txn_count": 225, "txn_amount": 2728171.5, "failed_count": 19, "pending_count": 51, "success_count": 155}, {"date": "2026-03-28", "txn_count": 199, "txn_amount": 2513938.17, "failed_count": 15, "pending_count": 48, "success_count": 136}, {"date": "2026-03-29", "txn_count": 200, "txn_amount": 2472291.52, "failed_count": 17, "pending_count": 42, "success_count": 141}, {"date": "2026-03-30", "txn_count": 210, "txn_amount": 2535497.77, "failed_count": 20, "pending_count": 40, "success_count": 150}, {"date": "2026-03-31", "txn_count": 233, "txn_amount": 2908018.04, "failed_count": 18, "pending_count": 51, "success_count": 164}], "hourly_failed_rate": [{"hour": 0, "txn_count": 1802, "failed_count": 143, "failed_rate": 0.0793562708}, {"hour": 1, "txn_count": 841, "failed_count": 68, "failed_rate": 0.0808561237}, {"hour": 2, "txn_count": 824, "failed_count": 68, "failed_rate": 0.0825242718}, {"hour": 3, "txn_count": 831, "failed_count": 65, "failed_rate": 0.0782190132}, {"hour": 4, "txn_count": 749, "failed_count": 60, "failed_rate": 0.0801068091}, {"hour": 5, "txn_count": 766, "failed_count": 54, "failed_rate": 0.0704960836}, {"hour": 6, "txn_count": 837, "failed_count": 47, "failed_rate": 0.0561529271}, {"hour": 7, "txn_count": 781, "failed_count": 54, "failed_rate": 0.0691421255}, {"hour": 8, "txn_count": 812, "failed_count": 58, "failed_rate": 0.0714285714}, {"hour": 9, "txn_count": 778, "failed_count": 56, "failed_rate": 0.0719794344}, {"hour": 10, "txn_count": 778, "failed_count": 69, "failed_rate": 0.088688946}, {"hour": 11, "txn_count": 765, "failed_count": 59, "failed_rate": 0.077124183}, {"hour": 12, "txn_count": 786, "failed_count": 58, "failed_rate": 0.0737913486}, {"hour": 13, "txn_count": 786, "failed_count": 59, "failed_rate": 0.0750636132}, {"hour": 14, "txn_count": 814, "failed_count": 68, "failed_rate": 0.0835380835}, {"hour": 15, "txn_count": 783, "failed_count": 67, "failed_rate": 0.0855683269}, {"hour": 16, "txn_count": 767, "failed_count": 70, "failed_rate": 0.0912646675}, {"hour": 17, "txn_count": 799, "failed_count": 56, "failed_rate": 0.0700876095}, {"hour": 18, "txn_count": 804, "failed_count": 63, "failed_rate": 0.078358209}, {"hour": 19, "txn_count": 778, "failed_count": 64, "failed_rate": 0.0822622108}, {"hour": 20, "txn_count": 769, "failed_count": 63, "failed_rate": 0.0819245774}, {"hour": 21, "txn_count": 784, "failed_count": 65, "failed_rate": 0.0829081633}, {"hour": 22, "txn_count": 773, "failed_count": 58, "failed_rate": 0.0750323415}, {"hour": 23, "txn_count": 793, "failed_count": 61, "failed_rate": 0.0769230769}], "category_performance": [{"merchant_category": "Unmatched / No Merchant Record", "txn_count": 10369, "txn_amount": 129530785.6, "failed_count": 816, "failed_rate": 0.0786961134}, {"merchant_category": "Retail - Other", "txn_count": 1426, "txn_amount": 17886516.73, "failed_count": 109, "failed_rate": 0.0764375877}, {"merchant_category": "Apparel & Fashion", "txn_count": 1053, "txn_amount": 13096775.74, "failed_count": 82, "failed_rate": 0.0778727445}, {"merchant_category": "Telecom & Mobile", "txn_count": 969, "txn_amount": 12134769.95, "failed_count": 82, "failed_rate": 0.084623323}, {"merchant_category": "Hotel & Lodging", "txn_count": 952, "txn_amount": 11846406.73, "failed_count": 68, "failed_rate": 0.0714285714}, {"merchant_category": "Books & Stationery", "txn_count": 931, "txn_amount": 11578633.13, "failed_count": 68, "failed_rate": 0.0730397422}, {"merchant_category": "Grocery", "txn_count": 912, "txn_amount": 11519139.97, "failed_count": 69, "failed_rate": 0.0756578947}, {"merchant_category": "Restaurants & Food Service", "txn_count": 913, "txn_amount": 11196564.39, "failed_count": 62, "failed_rate": 0.0679079956}, {"merchant_category": "Pharmacy & Medical", "txn_count": 842, "txn_amount": 10496884.48, "failed_count": 66, "failed_rate": 0.0783847981}, {"merchant_category": "Transportation & Travel", "txn_count": 821, "txn_amount": 10324107.36, "failed_count": 67, "failed_rate": 0.0816077954}, {"merchant_category": "Department Store", "txn_count": 812, "txn_amount": 10161924.74, "failed_count": 64, "failed_rate": 0.078817734}], "category_dispute_ratio": [{"merchant_category": "Apparel & Fashion", "txn_count": 1053, "txn_amount": 13096775.74, "cb_count": 229, "cb_amount": 637085.08, "cb_to_txn_ratio": 0.2174738841}, {"merchant_category": "Restaurants & Food Service", "txn_count": 913, "txn_amount": 11196564.39, "cb_count": 172, "cb_amount": 471453.83, "cb_to_txn_ratio": 0.1883899233}, {"merchant_category": "Unmatched / No Merchant Record", "txn_count": 10369, "txn_amount": 129530785.6, "cb_count": 1501, "cb_amount": 4289489.04, "cb_to_txn_ratio": 0.1447584145}, {"merchant_category": "Books & Stationery", "txn_count": 931, "txn_amount": 11578633.13, "cb_count": 129, "cb_amount": 320147.62, "cb_to_txn_ratio": 0.1385606874}, {"merchant_category": "Pharmacy & Medical", "txn_count": 842, "txn_amount": 10496884.48, "cb_count": 111, "cb_amount": 370453.99, "cb_to_txn_ratio": 0.1318289786}, {"merchant_category": "Transportation & Travel", "txn_count": 821, "txn_amount": 10324107.36, "cb_count": 99, "cb_amount": 255608.74, "cb_to_txn_ratio": 0.1205846529}, {"merchant_category": "Retail - Other", "txn_count": 1426, "txn_amount": 17886516.73, "cb_count": 168, "cb_amount": 466307.92, "cb_to_txn_ratio": 0.1178120617}, {"merchant_category": "Hotel & Lodging", "txn_count": 952, "txn_amount": 11846406.73, "cb_count": 107, "cb_amount": 284599.55, "cb_to_txn_ratio": 0.112394958}, {"merchant_category": "Telecom & Mobile", "txn_count": 969, "txn_amount": 12134769.95, "cb_count": 108, "cb_amount": 343974.17, "cb_to_txn_ratio": 0.1114551084}, {"merchant_category": "Department Store", "txn_count": 812, "txn_amount": 10161924.74, "cb_count": 90, "cb_amount": 251744.06, "cb_to_txn_ratio": 0.1108374384}, {"merchant_category": "Grocery", "txn_count": 912, "txn_amount": 11519139.97, "cb_count": 86, "cb_amount": 310256.8, "cb_to_txn_ratio": 0.0942982456}], "reason_distribution": [{"reason_code": "SERVICE_NOT_DELIVERED", "count": 610}, {"reason_code": "GENERAL_DISPUTE", "count": 557}, {"reason_code": "UNAUTHORIZED_TRANSACTION", "count": 371}, {"reason_code": "ACCOUNT_TAKEOVER", "count": 344}, {"reason_code": "FRAUD_SUSPECTED", "count": 327}, {"reason_code": "AMOUNT_MISMATCH", "count": 326}, {"reason_code": "DUPLICATE_DEBIT", "count": 265}], "severity_distribution": [{"severity": "MEDIUM", "count": 1024}, {"severity": "LOW", "count": 959}, {"severity": "HIGH", "count": 604}, {"severity": "CRITICAL", "count": 213}], "resolution_distribution": [{"resolution_status": "IN_PROGRESS", "count": 599}, {"resolution_status": "PENDING_BANK", "count": 458}, {"resolution_status": "REJECTED", "count": 443}, {"resolution_status": "CLOSED", "count": 442}, {"resolution_status": "OPEN", "count": 435}, {"resolution_status": "RESOLVED", "count": 423}], "channel_distribution": [{"channel": "IVR", "count": 709}, {"channel": "CHATBOT", "count": 698}, {"channel": "EMAIL", "count": 375}, {"channel": "BRANCH", "count": 366}, {"channel": "APP", "count": 344}, {"channel": "CALL_CENTER", "count": 308}], "top_merchants_by_cb_count": [{"merchant_id": "MCH9291", "merchant_name": "Mukhopadhyay, Dua and Dada", "merchant_category": "Apparel & Fashion", "merchant_status": "ACTIVE", "cb_count": 42.0, "cb_amount": 167555.99, "txn_count": 3.0, "txn_amount": 20252.79, "cb_to_txn_ratio": 14.0}, {"merchant_id": "MCH8779", "merchant_name": "Tak-Wali", "merchant_category": "Restaurants & Food Service", "merchant_status": "ACTIVE", "cb_count": 34.0, "cb_amount": 84515.06, "txn_count": 6.0, "txn_amount": 78407.96, "cb_to_txn_ratio": 5.6666666667}, {"merchant_id": "MCH1320", "merchant_name": "Babu-Khatri", "merchant_category": "Apparel & Fashion", "merchant_status": "SUSPENDED", "cb_count": 30.0, "cb_amount": 54121.32, "txn_count": 1.0, "txn_amount": 16705.45, "cb_to_txn_ratio": 30.0}, {"merchant_id": "MCH5954", "merchant_name": "Chand, Dora and Dey", "merchant_category": "Restaurants & Food Service", "merchant_status": "ACTIVE", "cb_count": 28.0, "cb_amount": 148004.79, "txn_count": 2.0, "txn_amount": 28731.99, "cb_to_txn_ratio": 14.0}, {"merchant_id": "MCH8953", "merchant_name": "Sibal Group", "merchant_category": "Apparel & Fashion", "merchant_status": "SUSPENDED", "cb_count": 27.0, "cb_amount": 85106.75, "txn_count": 3.0, "txn_amount": 40908.74, "cb_to_txn_ratio": 9.0}, {"merchant_id": "MCH2383", "merchant_name": "Dewan-Misra", "merchant_category": "Telecom & Mobile", "merchant_status": "ACTIVE", "cb_count": 27.0, "cb_amount": 106943.76, "txn_count": 3.0, "txn_amount": 32449.54, "cb_to_txn_ratio": 9.0}, {"merchant_id": "MCH5980", "merchant_name": "MISRA-GANGULY", "merchant_category": "Transportation & Travel", "merchant_status": "ACTIVE", "cb_count": 27.0, "cb_amount": 49480.73, "txn_count": 2.0, "txn_amount": 25578.03, "cb_to_txn_ratio": 13.5}, {"merchant_id": "MCH2757", "merchant_name": "Cherian-Parmer", "merchant_category": "Books & Stationery", "merchant_status": "ACTIVE", "cb_count": 25.0, "cb_amount": 69822.18, "txn_count": 1.0, "txn_amount": 17669.0, "cb_to_txn_ratio": 25.0}, {"merchant_id": "MCH8391", "merchant_name": "Talwar-Bhasin", "merchant_category": "Apparel & Fashion", "merchant_status": "ACTIVE", "cb_count": 24.0, "cb_amount": 53991.09, "txn_count": 2.0, "txn_amount": 40807.04, "cb_to_txn_ratio": 12.0}, {"merchant_id": "MCH2266", "merchant_name": "Natarajan and Sons", "merchant_category": "Pharmacy & Medical", "merchant_status": "ACTIVE", "cb_count": 24.0, "cb_amount": 78233.12, "txn_count": 1.0, "txn_amount": 6862.64, "cb_to_txn_ratio": 24.0}, {"merchant_id": "MCH7833", "merchant_name": "Chopra, Baral and Hayre", "merchant_category": "Books & Stationery", "merchant_status": "SUSPENDED", "cb_count": 22.0, "cb_amount": 45747.25, "txn_count": 4.0, "txn_amount": 29625.62, "cb_to_txn_ratio": 5.5}, {"merchant_id": "MCH8154", "merchant_name": "Yohannan PLC", "merchant_category": "Retail - Other", "merchant_status": "SUSPENDED", "cb_count": 22.0, "cb_amount": 51628.14, "txn_count": 4.0, "txn_amount": 38971.79, "cb_to_txn_ratio": 5.5}, {"merchant_id": "MCH7982", "merchant_name": "De0 Ltd", "merchant_category": "Department Store", "merchant_status": "ACTIVE", "cb_count": 4.0, "cb_amount": 8333.76, "txn_count": 3.0, "txn_amount": 29815.54, "cb_to_txn_ratio": 1.3333333333}, {"merchant_id": "MCH8735", "merchant_name": "Ha1der-Mane", "merchant_category": "Grocery", "merchant_status": "ACTIVE", "cb_count": 3.0, "cb_amount": 9487.54, "txn_count": 1.0, "txn_amount": 18187.66, "cb_to_txn_ratio": 3.0}, {"merchant_id": "MCH8999", "merchant_name": "Babu and Sons", "merchant_category": "Hotel & Lodging", "merchant_status": "ACTIVE", "cb_count": 3.0, "cb_amount": 9109.83, "txn_count": 5.0, "txn_amount": 52517.79, "cb_to_txn_ratio": 0.6}], "top_merchants_by_cb_amount": [{"merchant_id": "MCH9291", "merchant_name": "Mukhopadhyay, Dua and Dada", "merchant_category": "Apparel & Fashion", "merchant_status": "ACTIVE", "cb_count": 42.0, "cb_amount": 167555.99, "txn_count": 3.0, "txn_amount": 20252.79, "cb_to_txn_ratio": 14.0}, {"merchant_id": "MCH5954", "merchant_name": "Chand, Dora and Dey", "merchant_category": "Restaurants & Food Service", "merchant_status": "ACTIVE", "cb_count": 28.0, "cb_amount": 148004.79, "txn_count": 2.0, "txn_amount": 28731.99, "cb_to_txn_ratio": 14.0}, {"merchant_id": "MCH2383", "merchant_name": "Dewan-Misra", "merchant_category": "Telecom & Mobile", "merchant_status": "ACTIVE", "cb_count": 27.0, "cb_amount": 106943.76, "txn_count": 3.0, "txn_amount": 32449.54, "cb_to_txn_ratio": 9.0}, {"merchant_id": "MCH8953", "merchant_name": "Sibal Group", "merchant_category": "Apparel & Fashion", "merchant_status": "SUSPENDED", "cb_count": 27.0, "cb_amount": 85106.75, "txn_count": 3.0, "txn_amount": 40908.74, "cb_to_txn_ratio": 9.0}, {"merchant_id": "MCH8779", "merchant_name": "Tak-Wali", "merchant_category": "Restaurants & Food Service", "merchant_status": "ACTIVE", "cb_count": 34.0, "cb_amount": 84515.06, "txn_count": 6.0, "txn_amount": 78407.96, "cb_to_txn_ratio": 5.6666666667}, {"merchant_id": "MCH2266", "merchant_name": "Natarajan and Sons", "merchant_category": "Pharmacy & Medical", "merchant_status": "ACTIVE", "cb_count": 24.0, "cb_amount": 78233.12, "txn_count": 1.0, "txn_amount": 6862.64, "cb_to_txn_ratio": 24.0}, {"merchant_id": "MCH2757", "merchant_name": "Cherian-Parmer", "merchant_category": "Books & Stationery", "merchant_status": "ACTIVE", "cb_count": 25.0, "cb_amount": 69822.18, "txn_count": 1.0, "txn_amount": 17669.0, "cb_to_txn_ratio": 25.0}, {"merchant_id": "MCH1320", "merchant_name": "Babu-Khatri", "merchant_category": "Apparel & Fashion", "merchant_status": "SUSPENDED", "cb_count": 30.0, "cb_amount": 54121.32, "txn_count": 1.0, "txn_amount": 16705.45, "cb_to_txn_ratio": 30.0}, {"merchant_id": "MCH8391", "merchant_name": "Talwar-Bhasin", "merchant_category": "Apparel & Fashion", "merchant_status": "ACTIVE", "cb_count": 24.0, "cb_amount": 53991.09, "txn_count": 2.0, "txn_amount": 40807.04, "cb_to_txn_ratio": 12.0}, {"merchant_id": "MCH8154", "merchant_name": "Yohannan PLC", "merchant_category": "Retail - Other", "merchant_status": "SUSPENDED", "cb_count": 22.0, "cb_amount": 51628.14, "txn_count": 4.0, "txn_amount": 38971.79, "cb_to_txn_ratio": 5.5}, {"merchant_id": "MCH5980", "merchant_name": "MISRA-GANGULY", "merchant_category": "Transportation & Travel", "merchant_status": "ACTIVE", "cb_count": 27.0, "cb_amount": 49480.73, "txn_count": 2.0, "txn_amount": 25578.03, "cb_to_txn_ratio": 13.5}, {"merchant_id": "MCH7833", "merchant_name": "Chopra, Baral and Hayre", "merchant_category": "Books & Stationery", "merchant_status": "SUSPENDED", "cb_count": 22.0, "cb_amount": 45747.25, "txn_count": 4.0, "txn_amount": 29625.62, "cb_to_txn_ratio": 5.5}, {"merchant_id": "MCH8602", "merchant_name": "Raghavan-Ah1uwa1ia", "merchant_category": "Grocery", "merchant_status": "ACTIVE", "cb_count": 1.0, "cb_amount": 45384.61, "txn_count": 1.0, "txn_amount": 14828.69, "cb_to_txn_ratio": 1.0}, {"merchant_id": "MCH6328", "merchant_name": "Ray, Pandit and Bala", "merchant_category": "Telecom & Mobile", "merchant_status": "ACTIVE", "cb_count": 1.0, "cb_amount": 33975.77, "txn_count": 4.0, "txn_amount": 22486.02, "cb_to_txn_ratio": 0.25}, {"merchant_id": "MCH2402", "merchant_name": "Dhillon Group", "merchant_category": "Pharmacy & Medical", "merchant_status": "ACTIVE", "cb_count": 1.0, "cb_amount": 26842.07, "txn_count": 4.0, "txn_amount": 42858.61, "cb_to_txn_ratio": 0.25}], "top_merchants_by_cb_ratio": [{"merchant_id": "MCH8779", "merchant_name": "Tak-Wali", "merchant_category": "Restaurants & Food Service", "merchant_status": "ACTIVE", "cb_count": 34.0, "cb_amount": 84515.06, "txn_count": 6.0, "txn_amount": 78407.96, "cb_to_txn_ratio": 5.6666666667}, {"merchant_id": "MCH8999", "merchant_name": "Babu and Sons", "merchant_category": "Hotel & Lodging", "merchant_status": "ACTIVE", "cb_count": 3.0, "cb_amount": 9109.83, "txn_count": 5.0, "txn_amount": 52517.79, "cb_to_txn_ratio": 0.6}, {"merchant_id": "MCH8679", "merchant_name": "MANGAL-GOLE", "merchant_category": "Books & Stationery", "merchant_status": "ACTIVE", "cb_count": 3.0, "cb_amount": 2680.53, "txn_count": 5.0, "txn_amount": 73770.66, "cb_to_txn_ratio": 0.6}, {"merchant_id": "MCH1450", "merchant_name": "HORA, KUNDA AND DANI", "merchant_category": "Department Store", "merchant_status": "INACTIVE", "cb_count": 3.0, "cb_amount": 13945.92, "txn_count": 6.0, "txn_amount": 93347.29, "cb_to_txn_ratio": 0.5}], "high_risk_merchants": [{"merchant_id": "MCH9291", "merchant_name": "Mukhopadhyay, Dua and Dada", "merchant_category": "Apparel & Fashion", "merchant_status": "ACTIVE", "cb_count": 42.0, "cb_amount": 167555.99, "txn_count": 3.0, "txn_amount": 20252.79, "cb_to_txn_ratio": 14.0}, {"merchant_id": "MCH8953", "merchant_name": "Sibal Group", "merchant_category": "Apparel & Fashion", "merchant_status": "SUSPENDED", "cb_count": 27.0, "cb_amount": 85106.75, "txn_count": 3.0, "txn_amount": 40908.74, "cb_to_txn_ratio": 9.0}, {"merchant_id": "MCH2383", "merchant_name": "Dewan-Misra", "merchant_category": "Telecom & Mobile", "merchant_status": "ACTIVE", "cb_count": 27.0, "cb_amount": 106943.76, "txn_count": 3.0, "txn_amount": 32449.54, "cb_to_txn_ratio": 9.0}, {"merchant_id": "MCH8779", "merchant_name": "Tak-Wali", "merchant_category": "Restaurants & Food Service", "merchant_status": "ACTIVE", "cb_count": 34.0, "cb_amount": 84515.06, "txn_count": 6.0, "txn_amount": 78407.96, "cb_to_txn_ratio": 5.6666666667}, {"merchant_id": "MCH7833", "merchant_name": "Chopra, Baral and Hayre", "merchant_category": "Books & Stationery", "merchant_status": "SUSPENDED", "cb_count": 22.0, "cb_amount": 45747.25, "txn_count": 4.0, "txn_amount": 29625.62, "cb_to_txn_ratio": 5.5}, {"merchant_id": "MCH8154", "merchant_name": "Yohannan PLC", "merchant_category": "Retail - Other", "merchant_status": "SUSPENDED", "cb_count": 22.0, "cb_amount": 51628.14, "txn_count": 4.0, "txn_amount": 38971.79, "cb_to_txn_ratio": 5.5}], "high_risk_users": [{"user_id": "USR35882", "cb_count": 14, "cb_amount": 28104.89, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR62254", "cb_count": 11, "cb_amount": 43610.14, "full_name": "Oni Subramanian", "kyc_status": "VERIFIED", "risk_segment": "LOW"}, {"user_id": "USR73010", "cb_count": 11, "cb_amount": 30523.87, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR59679", "cb_count": 11, "cb_amount": 25653.06, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR87914", "cb_count": 11, "cb_amount": 20313.35, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR40538", "cb_count": 11, "cb_amount": 19084.93, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR46902", "cb_count": 11, "cb_amount": 17055.9, "full_name": "Urmi Gade", "kyc_status": "VERIFIED", "risk_segment": "MEDIUM"}, {"user_id": "USR97772", "cb_count": 11, "cb_amount": 8174.32, "full_name": "Hamsini Madan", "kyc_status": "VERIFIED", "risk_segment": "LOW"}, {"user_id": "USR88037", "cb_count": 10, "cb_amount": 33694.37, "full_name": "CHANDRESH VERMA", "kyc_status": "VERIFIED", "risk_segment": "LOW"}, {"user_id": "USR53527", "cb_count": 10, "cb_amount": 29416.09, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR85655", "cb_count": 10, "cb_amount": 15248.9, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR22644", "cb_count": 9, "cb_amount": 35499.71, "full_name": "Dayamai Chaudhry", "kyc_status": "PENDING", "risk_segment": "MEDIUM"}, {"user_id": "USR33934", "cb_count": 9, "cb_amount": 30452.45, "full_name": "Janaki Kanda", "kyc_status": "PENDING", "risk_segment": "LOW"}, {"user_id": "USR24536", "cb_count": 9, "cb_amount": 20938.03, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR79175", "cb_count": 9, "cb_amount": 20526.31, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR27947", "cb_count": 9, "cb_amount": 13741.46, "full_name": "Prisha Ga1a", "kyc_status": "REJECTED", "risk_segment": "LOW"}, {"user_id": "USR30157", "cb_count": 8, "cb_amount": 32628.03, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR71348", "cb_count": 8, "cb_amount": 27511.07, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR21384", "cb_count": 8, "cb_amount": 22467.46, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR29306", "cb_count": 8, "cb_amount": 21506.87, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR97580", "cb_count": 8, "cb_amount": 11484.91, "full_name": "Anjali Khare", "kyc_status": "VERIFIED", "risk_segment": "MEDIUM"}, {"user_id": "USR27533", "cb_count": 8, "cb_amount": 9826.62, "full_name": "Rudra Dash", "kyc_status": "VERIFIED", "risk_segment": "MEDIUM"}, {"user_id": "USR30500", "cb_count": 7, "cb_amount": 35907.74, "full_name": null, "kyc_status": null, "risk_segment": null}, {"user_id": "USR43455", "cb_count": 7, "cb_amount": 33877.59, "full_name": "Faqid Kalla", "kyc_status": "REJECTED", "risk_segment": "LOW"}, {"user_id": "USR24926", "cb_count": 7, "cb_amount": 26995.72, "full_name": "eshana wagle", "kyc_status": "VERIFIED", "risk_segment": "MEDIUM"}], "high_value_chargebacks": [{"complaint_id": "CBK0002600", "txn_id": "TXN00095920", "txn_id_valid_fk": false, "user_id": "USR42158", "user_id_valid_fk": false, "merchant_id": "MCH8602", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-02-06T12:50:00.000", "reported_timestamp": "2026-02-13T18:50:00.000", "bank_response_timestamp": "2026-02-21T18:50:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 7.0, "disputed_amount": 45384.61, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "UNAUTHORIZED_TRANSACTION", "reason_code_raw": "Unauthorized Transaction", "complaint_text": "Merchant service was not delivered after payment.", "resolution_status": "CLOSED", "severity": "HIGH", "channel": "CHATBOT", "full_name": null}, {"complaint_id": "CBK0001791", "txn_id": "TXN00002382", "txn_id_valid_fk": true, "user_id": "USR91799", "user_id_valid_fk": false, "merchant_id": "MCH9069", "merchant_id_valid_fk": false, "transaction_timestamp": "2026-01-02T22:06:00.000", "reported_timestamp": "2026-01-04T02:06:30.000", "bank_response_timestamp": "2026-01-31T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 1.0, "disputed_amount": 44046.77, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "AMOUNT_MISMATCH", "reason_code_raw": "Wrong Amount", "complaint_text": "Complaint received after multiple failed attempts.", "resolution_status": "CLOSED", "severity": "LOW", "channel": "APP", "full_name": null}, {"complaint_id": "CBK0001975", "txn_id": "TXN00019834", "txn_id_valid_fk": true, "user_id": "USR32424", "user_id_valid_fk": false, "merchant_id": "MCH5954", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-01-11T00:00:00.000", "reported_timestamp": "2026-01-14T00:00:00.000", "bank_response_timestamp": "2026-02-06T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 3.0, "disputed_amount": 41457.94, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "FRAUD_SUSPECTED", "reason_code_raw": "FRAUD", "complaint_text": "Customer says amount was debited twice.", "resolution_status": "RESOLVED", "severity": "LOW", "channel": "BRANCH", "full_name": null}, {"complaint_id": "CBK0000087", "txn_id": "TXN00008323", "txn_id_valid_fk": true, "user_id": "USR70375", "user_id_valid_fk": true, "merchant_id": "MCH3815", "merchant_id_valid_fk": false, "transaction_timestamp": "2026-03-26T04:50:42.000", "reported_timestamp": "2026-03-29T08:50:42.000", "bank_response_timestamp": "2026-03-29T08:50:42.000", "timestamps_logically_valid": true, "reporting_delay_days": 3.0, "disputed_amount": 36675.43, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "ACCOUNT_TAKEOVER", "reason_code_raw": "account hacked", "complaint_text": "merchant service was not delivered after payment.", "resolution_status": "PENDING_BANK", "severity": "MEDIUM", "channel": "IVR", "full_name": "Qasim Ghosh"}, {"complaint_id": "CBK0002346", "txn_id": "TXN00001292", "txn_id_valid_fk": true, "user_id": "USR25528", "user_id_valid_fk": false, "merchant_id": "MCH6328", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-03-24T00:00:00.000", "reported_timestamp": null, "bank_response_timestamp": "2026-05-05T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": null, "disputed_amount": 33975.77, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "SERVICE_NOT_DELIVERED", "reason_code_raw": "service failed", "complaint_text": "Customer says transaction was not authorized.", "resolution_status": "OPEN", "severity": "LOW", "channel": "EMAIL", "full_name": null}, {"complaint_id": "CBK0000672", "txn_id": "TXN00094670", "txn_id_valid_fk": false, "user_id": "USR23466", "user_id_valid_fk": false, "merchant_id": "MCH2383", "merchant_id_valid_fk": true, "transaction_timestamp": null, "reported_timestamp": "2026-03-19T00:00:00.000", "bank_response_timestamp": null, "timestamps_logically_valid": true, "reporting_delay_days": null, "disputed_amount": 33780.71, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "DUPLICATE_DEBIT", "reason_code_raw": "charged twice", "complaint_text": "MERCHANT SERVICE WAS NOT DELIVERED AFTER PAYMENT.", "resolution_status": "IN_PROGRESS", "severity": "LOW", "channel": "EMAIL", "full_name": null}, {"complaint_id": "CBK0002221", "txn_id": "TXN00016939", "txn_id_valid_fk": true, "user_id": "USR56378", "user_id_valid_fk": false, "merchant_id": "MCH2383", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-02-24T00:00:00.000", "reported_timestamp": "2026-03-07T00:00:00.000", "bank_response_timestamp": "2026-03-12T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 11.0, "disputed_amount": 27330.78, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "GENERAL_DISPUTE", "reason_code_raw": "Customer Dispute", "complaint_text": "Customer says transaction was not authorized.", "resolution_status": "REJECTED", "severity": "CRITICAL", "channel": "IVR", "full_name": null}, {"complaint_id": "CBK0001784", "txn_id": "TXN00013078", "txn_id_valid_fk": true, "user_id": "USR21865", "user_id_valid_fk": false, "merchant_id": "MCH5686", "merchant_id_valid_fk": false, "transaction_timestamp": null, "reported_timestamp": "2026-03-11T16:33:33.000", "bank_response_timestamp": "2026-03-25T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": null, "disputed_amount": 26923.0, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "GENERAL_DISPUTE", "reason_code_raw": "Customer Dispute", "complaint_text": "Complaint received after multiple failed attempts.", "resolution_status": "IN_PROGRESS", "severity": "HIGH", "channel": "CALL_CENTER", "full_name": null}, {"complaint_id": "CBK0001222", "txn_id": "TXN00004174", "txn_id_valid_fk": true, "user_id": "USR60027", "user_id_valid_fk": false, "merchant_id": "MCH2402", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-02-22T00:00:00.000", "reported_timestamp": "2026-03-10T00:00:00.000", "bank_response_timestamp": "2026-03-24T00:40:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 16.0, "disputed_amount": 26842.07, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "UNAUTHORIZED_TRANSACTION", "reason_code_raw": "unauth txn", "complaint_text": "Customer complaint text unclear due to poor call center notes.", "resolution_status": "REJECTED", "severity": "CRITICAL", "channel": "CHATBOT", "full_name": null}, {"complaint_id": "CBK0002156", "txn_id": "TXN00013206", "txn_id_valid_fk": true, "user_id": "USR11987", "user_id_valid_fk": true, "merchant_id": "MCH6665", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-01-24T09:52:00.000", "reported_timestamp": "2026-01-25T04:52:00.000", "bank_response_timestamp": null, "timestamps_logically_valid": true, "reporting_delay_days": 0.0, "disputed_amount": 26477.69, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "GENERAL_DISPUTE", "reason_code_raw": "Customer Dispute", "complaint_text": "Complaint received after multiple failed attempts.", "resolution_status": "IN_PROGRESS", "severity": "HIGH", "channel": "EMAIL", "full_name": "Bimala Tara"}, {"complaint_id": "CBK0001238", "txn_id": "TXN00006193", "txn_id_valid_fk": true, "user_id": "USR35817", "user_id_valid_fk": true, "merchant_id": "MCH7061", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-03-12T00:00:00.000", "reported_timestamp": "2026-03-13T00:00:00.000", "bank_response_timestamp": "2026-04-10T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 1.0, "disputed_amount": 26207.56, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "FRAUD_SUSPECTED", "reason_code_raw": "FRAUD", "complaint_text": "Customer says amount was debited twice.", "resolution_status": "IN_PROGRESS", "severity": "LOW", "channel": "APP", "full_name": "Geetika Narayanan"}, {"complaint_id": "CBK0001551", "txn_id": "TXN00014584", "txn_id_valid_fk": true, "user_id": "USR72106", "user_id_valid_fk": true, "merchant_id": "MCH5954", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-01-17T00:00:00.000", "reported_timestamp": null, "bank_response_timestamp": null, "timestamps_logically_valid": true, "reporting_delay_days": null, "disputed_amount": 25463.16, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "UNAUTHORIZED_TRANSACTION", "reason_code_raw": "not done by me", "complaint_text": "User reports money deducted but merchant denies receiving payment.", "resolution_status": "RESOLVED", "severity": "MEDIUM", "channel": "BRANCH", "full_name": "Frad0 Ma1h0tra"}, {"complaint_id": "CBK0001413", "txn_id": "TXN00017513", "txn_id_valid_fk": true, "user_id": "USR39726", "user_id_valid_fk": false, "merchant_id": "MCH5273", "merchant_id_valid_fk": false, "transaction_timestamp": "2026-01-22T00:00:00.000", "reported_timestamp": "2026-01-28T00:00:00.000", "bank_response_timestamp": "2026-02-25T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 6.0, "disputed_amount": 24586.31, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "UNAUTHORIZED_TRANSACTION", "reason_code_raw": "UNAUTHORISED", "complaint_text": "Customer complaint text unclear due to poor call center notes.", "resolution_status": "CLOSED", "severity": "LOW", "channel": "APP", "full_name": null}, {"complaint_id": "CBK0000912", "txn_id": "TXN00017717", "txn_id_valid_fk": true, "user_id": "USR72474", "user_id_valid_fk": false, "merchant_id": "MCH8508", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-02-19T00:00:00.000", "reported_timestamp": "2026-02-21T00:00:00.000", "bank_response_timestamp": "2026-03-11T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 2.0, "disputed_amount": 24414.54, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "FRAUD_SUSPECTED", "reason_code_raw": "suspicious transaction", "complaint_text": "Complaint received after multiple failed attempts.", "resolution_status": "OPEN", "severity": "LOW", "channel": "EMAIL", "full_name": null}, {"complaint_id": "CBK0001282", "txn_id": "TXN00032415", "txn_id_valid_fk": false, "user_id": "USR99611", "user_id_valid_fk": false, "merchant_id": "MCH2266", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-02-23T00:00:00.000", "reported_timestamp": "2026-02-24T00:00:00.000", "bank_response_timestamp": "2026-03-07T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 1.0, "disputed_amount": 23005.71, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "GENERAL_DISPUTE", "reason_code_raw": "no service", "complaint_text": "User says UPI PIN was not entered by them.", "resolution_status": "REJECTED", "severity": "MEDIUM", "channel": "CHATBOT", "full_name": null}, {"complaint_id": "CBK0000781", "txn_id": "TXN00004717", "txn_id_valid_fk": true, "user_id": "USR34703", "user_id_valid_fk": false, "merchant_id": "MCH2065", "merchant_id_valid_fk": false, "transaction_timestamp": "2026-01-11T05:47:02.000", "reported_timestamp": "2026-01-21T15:47:02.000", "bank_response_timestamp": "2026-01-25T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 10.0, "disputed_amount": 22390.0, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "SERVICE_NOT_DELIVERED", "reason_code_raw": "service failed", "complaint_text": "Complaint received after multiple failed attempts.", "resolution_status": "PENDING_BANK", "severity": "HIGH", "channel": "EMAIL", "full_name": null}, {"complaint_id": "CBK0001576", "txn_id": "TXN00012979", "txn_id_valid_fk": true, "user_id": "USR85329", "user_id_valid_fk": false, "merchant_id": "MCH1945", "merchant_id_valid_fk": false, "transaction_timestamp": "2026-01-07T00:00:00.000", "reported_timestamp": "2026-01-07T10:12:22.000", "bank_response_timestamp": "2026-01-08T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 0.0, "disputed_amount": 21185.86, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "FRAUD_SUSPECTED", "reason_code_raw": "FRAUD", "complaint_text": "Complaint received after multiple failed attempts.", "resolution_status": "CLOSED", "severity": "LOW", "channel": "CHATBOT", "full_name": null}, {"complaint_id": "CBK0002192", "txn_id": "TXN00002316", "txn_id_valid_fk": true, "user_id": "USR77746", "user_id_valid_fk": false, "merchant_id": "MCH1674", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-01-12T04:00:55.000", "reported_timestamp": "2026-01-14T00:00:00.000", "bank_response_timestamp": null, "timestamps_logically_valid": true, "reporting_delay_days": 1.0, "disputed_amount": 20754.36, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "FRAUD_SUSPECTED", "reason_code_raw": "scam", "complaint_text": "Customer says amount was debited twice.", "resolution_status": "IN_PROGRESS", "severity": "HIGH", "channel": "IVR", "full_name": null}, {"complaint_id": "CBK0000704", "txn_id": "TXN00015091", "txn_id_valid_fk": true, "user_id": "USR45203", "user_id_valid_fk": false, "merchant_id": "MCH9864", "merchant_id_valid_fk": false, "transaction_timestamp": "2026-03-28T00:00:00.000", "reported_timestamp": "2026-04-03T18:18:00.000", "bank_response_timestamp": "2026-05-01T00:00:00.000", "timestamps_logically_valid": true, "reporting_delay_days": 6.0, "disputed_amount": 20286.73, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "SERVICE_NOT_DELIVERED", "reason_code_raw": "Service Not Provided", "complaint_text": "Suspicious high-value payment disputed by customer. NA", "resolution_status": "OPEN", "severity": "HIGH", "channel": "CHATBOT", "full_name": null}, {"complaint_id": "CBK0002624", "txn_id": "TXN00001580", "txn_id_valid_fk": true, "user_id": "USR72987", "user_id_valid_fk": true, "merchant_id": "MCH6380", "merchant_id_valid_fk": true, "transaction_timestamp": "2026-01-18T00:00:00.000", "reported_timestamp": "2026-01-22T00:00:00.000", "bank_response_timestamp": "2026-01-25T01:58:32.000", "timestamps_logically_valid": true, "reporting_delay_days": 4.0, "disputed_amount": 19958.58, "disputed_amount_was_negative": false, "disputed_amount_missing": false, "reason_code": "UNAUTHORIZED_TRANSACTION", "reason_code_raw": "Unauthorized Transaction", "complaint_text": "Customer complaint text unclear due to poor call center notes.", "resolution_status": "PENDING_BANK", "severity": "CRITICAL", "channel": "APP", "full_name": "YATIN DARA"}], "kyc_distribution": [{"kyc_status": "VERIFIED", "count": 18633}, {"kyc_status": "PENDING", "count": 7930}, {"kyc_status": "REJECTED", "count": 2357}], "risk_segment_distribution": [{"risk_segment": "LOW", "count": 16821}, {"risk_segment": "MEDIUM", "count": 7818}, {"risk_segment": "HIGH", "count": 2998}, {"risk_segment": "Not Provided", "count": 1283}], "dispute_rate_by_kyc_status": [{"kyc_status": "NO_KYC_RECORD", "txn_count": 13522, "cb_count": 1915, "cb_rate": 0.141621062}, {"kyc_status": "PENDING", "txn_count": 1814, "cb_count": 224, "cb_rate": 0.1234840132}, {"kyc_status": "REJECTED", "txn_count": 513, "cb_count": 70, "cb_rate": 0.1364522417}, {"kyc_status": "VERIFIED", "txn_count": 4151, "cb_count": 591, "cb_rate": 0.1423753312}], "merchant_spikes": [{"merchant_id": "MCH4221", "date": "2026-02-09", "txn_count": 3, "merchant_name": "Rastogi, Goda and Naidu", "merchant_category": "Retail - Other"}, {"merchant_id": "MCH7878", "date": "2026-01-22", "txn_count": 3, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1054", "date": "2026-02-17", "txn_count": 2, "merchant_name": "Cheema Ltd", "merchant_category": "Department Store"}, {"merchant_id": "MCH1110", "date": "2026-01-19", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1113", "date": "2026-02-22", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1116", "date": "2026-02-10", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1173", "date": "2026-01-01", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1176", "date": "2026-02-27", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1216", "date": "2026-01-29", "txn_count": 2, "merchant_name": "Mani Ltd", "merchant_category": "Retail - Other"}, {"merchant_id": "MCH1233", "date": "2026-02-24", "txn_count": 2, "merchant_name": "Upadhyay, Lall and Kala", "merchant_category": "Books & Stationery"}, {"merchant_id": "MCH1255", "date": "2026-02-12", "txn_count": 2, "merchant_name": "Bose, Memon and Luthra", "merchant_category": "Books & Stationery"}, {"merchant_id": "MCH1302", "date": "2026-02-25", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1349", "date": "2026-02-25", "txn_count": 2, "merchant_name": "Verma-Rastogi", "merchant_category": "Books & Stationery"}, {"merchant_id": "MCH1368", "date": "2026-01-07", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1391", "date": "2026-01-21", "txn_count": 2, "merchant_name": "Kale, Shroff and Barad", "merchant_category": "Hotel & Lodging"}, {"merchant_id": "MCH1432", "date": "2026-01-15", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1481", "date": "2026-01-19", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1020", "date": "2026-03-05", "txn_count": 2, "merchant_name": "Garg-Kale", "merchant_category": "Transportation & Travel"}, {"merchant_id": "MCH1501", "date": "2026-02-06", "txn_count": 2, "merchant_name": "Anand-Bhatt", "merchant_category": "Telecom & Mobile"}, {"merchant_id": "MCH1513", "date": "2026-03-19", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1584", "date": "2026-03-03", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1638", "date": "2026-03-04", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1726", "date": "2026-02-21", "txn_count": 2, "merchant_name": "RAJA AND SONS", "merchant_category": "Transportation & Travel"}, {"merchant_id": "MCH1741", "date": "2026-03-06", "txn_count": 2, "merchant_name": null, "merchant_category": null}, {"merchant_id": "MCH1787", "date": "2026-02-08", "txn_count": 2, "merchant_name": "JOHAL AND SONS", "merchant_category": "Books & Stationery"}]}</script>
+<script>
+const DATA = JSON.parse(document.getElementById('dashboard-data').textContent);
+
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+const CAT = () => [css('--s1'), css('--s2'), css('--s3'), css('--s4'), css('--s5'), css('--s6'), css('--s7'), css('--s8')];
+
+const fmtINR = (v) => '₹' + Number(v).toLocaleString('en-IN', {maximumFractionDigits: 0});
+const fmtINR2 = (v) => '₹' + Number(v).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+const fmtPct = (v) => (Number(v) * 100).toFixed(1) + '%';
+const fmtNum = (v) => Number(v).toLocaleString('en-IN');
+
+Chart.defaults.font.family = "system-ui, -apple-system, 'Segoe UI', sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.color = css('--text-secondary');
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.legend.labels.boxHeight = 8;
+Chart.defaults.plugins.tooltip.enabled = false; // replaced by glassmorphic HTML tooltip below
+
+function baseGrid() {
+  return { color: css('--grid'), drawTicks: false };
+}
+
+// ---- Glassmorphic HTML tooltip (shared by every chart) ---------------------
+function getTooltipEl() {
+  let el = document.getElementById('chart-tooltip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'chart-tooltip';
+    el.className = 'chartjs-tooltip';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function externalTooltip(valueFmt) {
+  return (context) => {
+    const { chart, tooltip } = context;
+    const el = getTooltipEl();
+    if (tooltip.opacity === 0) { el.style.opacity = 0; return; }
+    if (tooltip.body) {
+      const title = tooltip.title && tooltip.title[0] ? tooltip.title[0] : '';
+      const rows = tooltip.dataPoints.map(dp => {
+        const color = dp.dataset.backgroundColor;
+        const dot = Array.isArray(color) ? color[dp.dataIndex] : color;
+        const val = valueFmt ? valueFmt(dp) : dp.formattedValue;
+        return `<div class="tt-row"><span class="tt-dot" style="background:${dot || css('--accent')}"></span>${val}</div>`;
+      }).join('');
+      el.innerHTML = (title ? `<div class="tt-title">${title}</div>` : '') + rows;
+    }
+    const rect = chart.canvas.getBoundingClientRect();
+    el.style.opacity = 1;
+    el.style.left = (window.scrollX + rect.left + tooltip.caretX) + 'px';
+    el.style.top = (window.scrollY + rect.top + tooltip.caretY) + 'px';
+  };
+}
+
+function kpiTile(label, value, sub, cls, deltaHtml) {
+  const div = document.createElement('div');
+  div.className = 'tile' + (cls ? ' ' + cls : '');
+  div.innerHTML = `<div class="label">${label}</div>` +
+    `<div class="value-row"><span class="value">${value}</span>${deltaHtml || ''}</div>` +
+    (sub ? `<div class="sub">${sub}</div>` : '');
+  return div;
+}
+
+// direction: 'up-good' (rising is good), 'up-bad' (rising is bad)
+function deltaBadge(curr, prev, direction) {
+  if (prev === 0 || prev == null || curr == null || !isFinite(curr)) return '';
+  const change = (curr - prev) / Math.abs(prev);
+  if (Math.abs(change) < 0.001) return `<span class="delta flat">— flat</span>`;
+  const isUp = change > 0;
+  const goodWhenUp = direction === 'up-good';
+  const isGood = isUp ? goodWhenUp : !goodWhenUp;
+  const arrow = isUp ? '▲' : '▼';
+  return `<span class="delta ${isUp ? 'up' : 'down'} ${isGood ? 'is-good' : 'is-bad'}">${arrow} ${Math.abs(change * 100).toFixed(1)}%</span>`;
+}
+
+function applyFadeUp(container) {
+  const els = container.querySelectorAll('.tile, .card');
+  els.forEach((el, i) => {
+    el.classList.add('fade-up');
+    el.style.animationDelay = (i * 45) + 'ms';
+  });
+}
+
+// ---- Filter panel: populate option lists from the full dataset -------------
+function populateChips(containerId, values) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = values.map(v =>
+    `<label class="chip"><input type="checkbox" value="${v}" checked/> ${v}</label>`
+  ).join('');
+}
+const allCategories = [...new Set(DATA.category_performance.map(d => d.merchant_category))].sort();
+const allReasons = DATA.reason_distribution.map(d => d.reason_code);
+const allSeverities = DATA.severity_distribution.map(d => d.severity);
+const allKyc = DATA.kyc_distribution.map(d => d.kyc_status);
+populateChips('filter-categories', allCategories);
+populateChips('filter-reasons', allReasons);
+populateChips('filter-severities', allSeverities);
+populateChips('filter-kyc', allKyc);
+
+const fullDates = DATA.daily_trend.map(d => d.date);
+document.getElementById('filter-date-start').min = fullDates[0];
+document.getElementById('filter-date-start').max = fullDates[fullDates.length - 1];
+document.getElementById('filter-date-end').min = fullDates[0];
+document.getElementById('filter-date-end').max = fullDates[fullDates.length - 1];
+
+function getChecked(containerId) {
+  return Array.from(document.querySelectorAll('#' + containerId + ' input:checked')).map(i => i.value);
+}
+// "all checked" (or none checked) both mean "no filter applied" -- avoids an
+// accidentally-empty chart if someone unchecks every box.
+function effectiveSet(checked, all) {
+  return (checked.length === 0 || checked.length === all.length) ? null : new Set(checked);
+}
+
+function currentFilters() {
+  return {
+    start: document.getElementById('filter-date-start').value || null,
+    end: document.getElementById('filter-date-end').value || null,
+    categories: effectiveSet(getChecked('filter-categories'), allCategories),
+    reasons: effectiveSet(getChecked('filter-reasons'), allReasons),
+    severities: effectiveSet(getChecked('filter-severities'), allSeverities),
+    kyc: effectiveSet(getChecked('filter-kyc'), allKyc),
+  };
+}
+function activeFilterCount(f) {
+  let n = 0;
+  if (f.start || f.end) n++;
+  if (f.categories) n++;
+  if (f.reasons) n++;
+  if (f.severities) n++;
+  if (f.kyc) n++;
+  return n;
+}
+
+// ---- Chart instance registry so Apply/Reset can re-render in place --------
+const charts = {};
+function upsertChart(id, config) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), config);
+}
+
+function foldOther(rows, keyField, valField, cap) {
+  const sorted = [...rows].sort((a,b) => b[valField] - a[valField]);
+  if (sorted.length <= cap) return sorted;
+  const head = sorted.slice(0, cap - 1);
+  const tail = sorted.slice(cap - 1);
+  const otherVal = tail.reduce((s, r) => s + r[valField], 0);
+  head.push({ [keyField]: 'Other', [valField]: otherVal });
+  return head;
+}
+
+function renderDonut(elId, rows, keyField, valField) {
+  const items = foldOther(rows, keyField, valField, 8);
+  const colors = CAT();
+  upsertChart(elId, {
+    type: 'doughnut',
+    data: { labels: items.map(d => d[keyField]), datasets: [{ data: items.map(d => d[valField]), backgroundColor: items.map((_, i) => colors[i % colors.length]), borderColor: '#11151F', borderWidth: 2 }] },
+    options: { plugins: { legend: { position: 'right', labels: { padding: 10, font: { size: 10.5 }, color: css('--text-secondary') } }, tooltip: { enabled: false, external: externalTooltip() } }, cutout: '62%' }
+  });
+}
+
+// =============================================================================
+// Master render: draws every KPI + chart from DATA, narrowed by `filters`.
+// Called once on load (no filters) and again whenever Apply/Reset fires.
+// =============================================================================
+function renderAll(filters) {
+  filters = filters || { start: null, end: null, categories: null, reasons: null, severities: null, kyc: null };
+  const k = DATA.kpi;
+
+  // ---- Date-filtered transaction trend (the only row-level-ish series we have) --
+  const trend = DATA.daily_trend.filter(d => (!filters.start || d.date >= filters.start) && (!filters.end || d.date <= filters.end));
+  const dates = trend.map(d => d.date);
+  const sum = (f) => trend.reduce((s, d) => s + d[f], 0);
+  const filteredTxn = sum('txn_count') || 0;
+  const filteredAmount = sum('txn_amount') || 0;
+  const kView = {
+    ...k,
+    total_txn: filteredTxn,
+    total_amount_all: filteredAmount,
+    avg_txn_value_all: filteredTxn ? filteredAmount / filteredTxn : 0,
+    success_rate: filteredTxn ? sum('success_count') / filteredTxn : 0,
+    failed_rate: filteredTxn ? sum('failed_count') / filteredTxn : 0,
+    pending_rate: filteredTxn ? sum('pending_count') / filteredTxn : 0,
+  };
+  const isFiltered = !!(filters.start || filters.end);
+
+  // Trend deltas: first half vs second half of the *full* window (a stable,
+  // filter-independent read on direction of travel -- not affected by
+  // whatever ad-hoc date range is currently applied).
+  const fullTrend = DATA.daily_trend;
+  const mid = Math.floor(fullTrend.length / 2) || 1;
+  const firstHalf = fullTrend.slice(0, mid), secondHalf = fullTrend.slice(mid);
+  const halfSum = (arr, f) => arr.reduce((s, d) => s + d[f], 0);
+  const rate = (arr, num, den) => (halfSum(arr, den) ? halfSum(arr, num) / halfSum(arr, den) : 0);
+  const deltas = {
+    total_txn: deltaBadge(halfSum(secondHalf, 'txn_count'), halfSum(firstHalf, 'txn_count'), 'up-good'),
+    total_amount_all: deltaBadge(halfSum(secondHalf, 'txn_amount'), halfSum(firstHalf, 'txn_amount'), 'up-good'),
+    success_rate: deltaBadge(rate(secondHalf, 'success_count', 'txn_count'), rate(firstHalf, 'success_count', 'txn_count'), 'up-good'),
+    failed_rate: deltaBadge(rate(secondHalf, 'failed_count', 'txn_count'), rate(firstHalf, 'failed_count', 'txn_count'), 'up-bad'),
+  };
+
+  // ---- Meta row ----------------------------------------------------------
+  document.getElementById('meta-range').textContent = isFiltered
+    ? `Filtered window: ${dates[0] || '—'} → ${dates[dates.length - 1] || '—'}`
+    : `Window: ${fullDates[0]} → ${fullDates[fullDates.length - 1]}`;
+  document.getElementById('meta-txn').textContent = `${fmtNum(kView.total_txn)} transactions`;
+  document.getElementById('meta-cb').textContent = `${fmtNum(k.cb_count)} chargebacks`;
+
+  // ---- KPI grid ------------------------------------------------------------
+  const kpiGrid = document.getElementById('kpi-grid');
+  kpiGrid.innerHTML = '';
+  [
+    ['Total transactions', fmtNum(kView.total_txn), isFiltered ? 'Filtered window' : 'All statuses', null, deltas.total_txn],
+    ['Total transaction value', fmtINR(kView.total_amount_all), `Success-only: ${fmtINR(k.total_amount_success)}`, null, deltas.total_amount_all],
+    ['Average transaction value', fmtINR(kView.avg_txn_value_all), isFiltered ? 'Filtered window' : 'All statuses'],
+    ['Success rate', fmtPct(kView.success_rate), null, 'good', deltas.success_rate],
+    ['Failed rate', fmtPct(kView.failed_rate), null, kView.failed_rate > 0.1 ? 'flag' : null, deltas.failed_rate],
+    ['Pending rate', fmtPct(kView.pending_rate)],
+    ['Chargeback count', fmtNum(k.cb_count), fmtPct(k.cb_to_txn_ratio) + ' of transactions'],
+    ['Chargeback amount', fmtINR(k.cb_amount), fmtPct(k.cb_to_txn_amount_ratio) + ' of transaction value'],
+    ['Avg. dispute reporting delay', k.avg_delay_days != null ? k.avg_delay_days.toFixed(1) + ' days' : '—', `${fmtNum(k.delayed_7d_count)} reported after 7+ days`],
+    ['KYC completion rate', fmtPct(k.kyc_completion_rate), null, 'good'],
+    ['KYC rejection rate', fmtPct(k.kyc_rejection_rate)],
+    ['Transactions missing/invalid UTR', fmtPct(k.utr_missing_rate + k.utr_invalid_rate), `${fmtNum(k.total_txn * (k.utr_missing_rate + k.utr_invalid_rate))} rows`],
+  ].forEach(([label, value, sub, cls, delta]) => kpiGrid.appendChild(kpiTile(label, value, sub, cls, delta)));
+
+  // ---- Daily trend (date-filterable) ---------------------------------------
+  upsertChart('chart-daily-count', {
+    type: 'line',
+    data: { labels: dates, datasets: [{ data: trend.map(d => d.txn_count), borderColor: css('--s1'), backgroundColor: 'rgba(99,102,241,0.12)', fill: true, borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
+    options: { plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip() } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { grid: baseGrid(), beginAtZero: true } } }
+  });
+  upsertChart('chart-daily-amount', {
+    type: 'line',
+    data: { labels: dates, datasets: [{ data: trend.map(d => d.txn_amount), borderColor: css('--s2'), backgroundColor: 'rgba(6,182,212,0.12)', fill: true, borderWidth: 2, pointRadius: 0, tension: 0.3 }] },
+    options: { plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip((dp) => fmtINR(dp.parsed.y)) } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 6 } }, y: { grid: baseGrid(), beginAtZero: true, ticks: { callback: (v) => fmtINR(v) } } } }
+  });
+  upsertChart('chart-hourly-fail', {
+    type: 'bar',
+    data: { labels: DATA.hourly_failed_rate.map(d => d.hour + ':00'), datasets: [{ data: DATA.hourly_failed_rate.map(d => d.failed_rate), backgroundColor: css('--s5'), borderRadius: 5, maxBarThickness: 14 }] },
+    options: { plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip((dp) => fmtPct(dp.parsed.y)) } }, scales: { x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } }, y: { grid: baseGrid(), beginAtZero: true, ticks: { callback: (v) => fmtPct(v) } } } }
+  });
+
+  // ---- Category performance (category-filterable) ---------------------------
+  const catPool = filters.categories ? DATA.category_performance.filter(d => filters.categories.has(d.merchant_category)) : DATA.category_performance;
+  const catAmount = [...catPool].sort((a,b) => b.txn_amount - a.txn_amount).slice(0, 8);
+  upsertChart('chart-cat-amount', {
+    type: 'bar',
+    data: { labels: catAmount.map(d => d.merchant_category), datasets: [{ data: catAmount.map(d => d.txn_amount), backgroundColor: css('--s1'), borderRadius: 5, maxBarThickness: 16 }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip((dp) => fmtINR(dp.parsed.x)) } }, scales: { x: { grid: baseGrid(), beginAtZero: true, ticks: { callback: (v) => fmtINR(v) } }, y: { grid: { display: false } } } }
+  });
+  const catRatioPool = filters.categories ? DATA.category_dispute_ratio.filter(d => filters.categories.has(d.merchant_category)) : DATA.category_dispute_ratio;
+  const catRatio = [...catRatioPool].filter(d => d.txn_count >= 20).sort((a,b) => b.cb_to_txn_ratio - a.cb_to_txn_ratio).slice(0, 8);
+  upsertChart('chart-cat-ratio', {
+    type: 'bar',
+    data: { labels: catRatio.map(d => d.merchant_category), datasets: [{ data: catRatio.map(d => d.cb_to_txn_ratio), backgroundColor: css('--s4'), borderRadius: 5, maxBarThickness: 16 }] },
+    options: { indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip((dp) => fmtPct(dp.parsed.x)) } }, scales: { x: { grid: baseGrid(), beginAtZero: true, ticks: { callback: (v) => fmtPct(v) } }, y: { grid: { display: false } } } }
+  });
+
+  // ---- Dispute composition donuts (reason/severity-filterable) --------------
+  const reasonPool = filters.reasons ? DATA.reason_distribution.filter(d => filters.reasons.has(d.reason_code)) : DATA.reason_distribution;
+  renderDonut('chart-reason', reasonPool, 'reason_code', 'count');
+  const severityPool = filters.severities ? DATA.severity_distribution.filter(d => filters.severities.has(d.severity)) : DATA.severity_distribution;
+  renderDonut('chart-severity', severityPool, 'severity', 'count');
+  renderDonut('chart-resolution', DATA.resolution_distribution, 'resolution_status', 'count');
+
+  // ---- Customer risk (kyc-filterable) ----------------------------------------
+  const kycPool = filters.kyc ? DATA.kyc_distribution.filter(d => filters.kyc.has(d.kyc_status)) : DATA.kyc_distribution;
+  renderDonut('chart-kyc', kycPool, 'kyc_status', 'count');
+  renderDonut('chart-risk', DATA.risk_segment_distribution, 'risk_segment', 'count');
+
+  const kycDisputePool = filters.kyc ? DATA.dispute_rate_by_kyc_status.filter(d => filters.kyc.has(d.kyc_status)) : DATA.dispute_rate_by_kyc_status;
+  upsertChart('chart-kyc-dispute', {
+    type: 'bar',
+    data: { labels: kycDisputePool.map(d => d.kyc_status), datasets: [{ data: kycDisputePool.map(d => d.cb_rate), backgroundColor: css('--s6'), borderRadius: 5, maxBarThickness: 28 }] },
+    options: { plugins: { legend: { display: false }, tooltip: { enabled: false, external: externalTooltip((dp) => fmtPct(dp.parsed.y)) } }, scales: { x: { grid: { display: false } }, y: { grid: baseGrid(), beginAtZero: true, ticks: { callback: (v) => fmtPct(v) } } } }
+  });
+
+  // ---- Fraud callout ------------------------------------------------------------
+  const topCount = DATA.top_merchants_by_cb_count[0];
+  const topRatio = DATA.top_merchants_by_cb_ratio[0];
+  document.getElementById('fraud-callout').innerHTML =
+    `<strong>${topCount.merchant_name}</strong> (${topCount.merchant_id}, ${topCount.merchant_category}) logged
+     <strong>${topCount.cb_count} chargebacks</strong> against only ${topCount.txn_count} recorded transactions.
+     ${topRatio ? `<strong>${topRatio.merchant_name}</strong> (${topRatio.merchant_id}) shows the most extreme ratio at
+     <strong>${fmtPct(topRatio.cb_to_txn_ratio)}</strong> of matched transaction volume disputed.` : ''}
+     ${k.unmatched_merchant_cb_count} additional chargebacks (${fmtINR(k.unmatched_merchant_cb_amount)}) reference a
+     merchant_id with <strong>no master-data record at all</strong> — a strong ghost-merchant / fraud-ring signal,
+     tracked separately from this leaderboard.`;
+
+  // ---- Tables (unaffected by filters -- these are entity leaderboards, not trends) --
+  renderTable('table-top-cb-count', DATA.top_merchants_by_cb_count.slice(0, 10), [
+    { label: 'Merchant', field: 'merchant_name' },
+    { label: 'Category', field: 'merchant_category' },
+    { label: 'Status', fmt: r => `<span class="pill ${r.merchant_status === 'ACTIVE' ? 'good' : (r.merchant_status === 'SUSPENDED' || r.merchant_status === 'BLOCKED' ? 'critical' : 'warning')}">${r.merchant_status}</span>` },
+    { label: 'Chargebacks', field: 'cb_count', num: true },
+    { label: 'Matched txns', field: 'txn_count', num: true },
+    { label: 'CB amount', num: true, fmt: r => fmtINR(r.cb_amount) },
+  ]);
+  renderTable('table-top-cb-ratio', DATA.top_merchants_by_cb_ratio.slice(0, 10), [
+    { label: 'Merchant', field: 'merchant_name' },
+    { label: 'Category', field: 'merchant_category' },
+    { label: 'Chargebacks', field: 'cb_count', num: true },
+    { label: 'Matched txns', field: 'txn_count', num: true },
+    { label: 'CB / txn ratio', num: true, fmt: r => `<span class="pill critical">${fmtPct(r.cb_to_txn_ratio)}</span>` },
+  ]);
+  renderTable('table-spikes', DATA.merchant_spikes.slice(0, 12), [
+    { label: 'Date', field: 'date' },
+    { label: 'Merchant', field: 'merchant_name' },
+    { label: 'Category', field: 'merchant_category' },
+    { label: 'Transactions that day', field: 'txn_count', num: true },
+  ]);
+  renderTable('table-high-risk-users', DATA.high_risk_users.slice(0, 10), [
+    { label: 'User', fmt: r => r.full_name || r.user_id },
+    { label: 'KYC status', fmt: r => r.kyc_status || 'NO RECORD' },
+    { label: 'Risk segment', field: 'risk_segment' },
+    { label: 'Disputes', field: 'cb_count', num: true },
+    { label: 'Disputed amount', num: true, fmt: r => fmtINR(r.cb_amount) },
+  ]);
+  renderTable('table-high-value-cb', DATA.high_value_chargebacks.slice(0, 10), [
+    { label: 'Complaint', field: 'complaint_id' },
+    { label: 'User', fmt: r => r.full_name || r.user_id },
+    { label: 'Reason', field: 'reason_code' },
+    { label: 'Severity', fmt: r => `<span class="pill ${r.severity === 'CRITICAL' ? 'critical' : r.severity === 'HIGH' ? 'warning' : ''}">${r.severity}</span>` },
+    { label: 'Amount', num: true, fmt: r => fmtINR2(r.disputed_amount) },
+  ]);
+
+  // ---- Data quality grid ---------------------------------------------------------
+  const dqGrid = document.getElementById('dq-grid');
+  dqGrid.innerHTML = '';
+  [
+    ['Transactions with a matching KYC record', fmtPct(k.user_fk_valid_rate), null, k.user_fk_valid_rate < 0.5 ? 'flag' : null],
+    ['Transactions with a matching merchant record', fmtPct(k.merchant_fk_valid_rate), null, k.merchant_fk_valid_rate < 0.5 ? 'flag' : null],
+    ['Chargebacks with a valid transaction reference', fmtPct(k.txn_fk_valid_rate_cb)],
+    ['Chargebacks on unmatched merchants', fmtNum(k.unmatched_merchant_cb_count), fmtINR(k.unmatched_merchant_cb_amount)],
+    ['Missing/invalid UTR', fmtPct(k.utr_missing_rate + k.utr_invalid_rate)],
+    ['Spike-day → dispute correlations', fmtNum(k.spike_then_dispute_count), 'within 10 days of a spike'],
+  ].forEach(([label, value, sub, cls]) => dqGrid.appendChild(kpiTile(label, value, sub, cls)));
+
+  applyFadeUp(document.getElementById('kpi-grid'));
+  applyFadeUp(document.getElementById('dq-grid'));
+  document.querySelectorAll('.card').forEach((el, i) => { el.classList.remove('fade-up'); void el.offsetWidth; el.classList.add('fade-up'); el.style.animationDelay = (i * 35) + 'ms'; });
+
+  // ---- Filter button badge --------------------------------------------------
+  const n = activeFilterCount(filters);
+  const countEl = document.getElementById('filter-count');
+  countEl.style.display = n ? 'inline-block' : 'none';
+  countEl.textContent = n;
+}
+
+function renderTable(elId, rows, columns) {
+  const table = document.getElementById(elId);
+  const thead = `<thead><tr>${columns.map(c => `<th class="${c.num ? 'num' : ''}">${c.label}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${rows.map(r => `<tr>${columns.map(c => `<td class="${c.num ? 'num' : ''}">${c.fmt ? c.fmt(r) : (r[c.field] ?? '—')}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  table.innerHTML = thead + tbody;
+}
+
+// ---- Live risk badge (uses the full, unfiltered dataset) --------------------
+const riskMerchants = DATA.high_risk_merchants ? DATA.high_risk_merchants.length : 0;
+document.getElementById('risk-badge-text').textContent =
+  `${fmtNum(riskMerchants)} High-Risk Merchants · ${fmtNum(DATA.kpi.unmatched_merchant_cb_count)} Ghost-Merchant Disputes`;
+
+// ---- Filter panel open/close + Apply/Reset wiring ----------------------------
+const overlay = document.getElementById('filter-overlay');
+const panel = document.getElementById('filter-panel');
+function openPanel() { overlay.classList.add('open'); panel.classList.add('open'); }
+function closePanel() { overlay.classList.remove('open'); panel.classList.remove('open'); }
+document.getElementById('filters-toggle').addEventListener('click', openPanel);
+document.getElementById('filter-close').addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+
+document.getElementById('filter-apply').addEventListener('click', () => {
+  renderAll(currentFilters());
+  closePanel();
+});
+document.getElementById('filter-reset').addEventListener('click', () => {
+  document.getElementById('filter-date-start').value = '';
+  document.getElementById('filter-date-end').value = '';
+  document.querySelectorAll('.checkbox-list input[type="checkbox"]').forEach(cb => cb.checked = true);
+  renderAll(null);
+  closePanel();
+});
+
+// ---- Initial render -----------------------------------------------------------
+renderAll(null);
+</script>
+</body>
+</html>

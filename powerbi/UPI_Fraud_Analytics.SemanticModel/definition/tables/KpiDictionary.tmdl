@@ -1,0 +1,57 @@
+table KpiDictionary
+	lineageTag: 74779c6f-f807-491e-a65e-d34657d401af
+
+	column KpiName
+		lineageTag: 4026f8c9-ff3f-4890-804d-681fe8861d52
+		isNameInferred
+		sourceColumn: [KpiName]
+
+	column Formula
+		lineageTag: 2da98bb2-044d-4500-8fe5-2054b3732db4
+		isNameInferred
+		sourceColumn: [Formula]
+
+	column DataSource
+		lineageTag: fa4559ca-48f1-4f43-b1be-4d0c1d748208
+		isNameInferred
+		sourceColumn: [DataSource]
+
+	column UpdateFrequency
+		lineageTag: 0fb7e2db-36ee-4d24-bc9f-e09770643f15
+		isNameInferred
+		sourceColumn: [UpdateFrequency]
+
+	column Owner
+		lineageTag: 60dd836e-5715-4618-a128-f696201e3cd2
+		isNameInferred
+		sourceColumn: [Owner]
+
+	partition KpiDictionary = calculated
+		mode: import
+		source =
+				DATATABLE(
+					"KpiName", STRING, "Formula", STRING, "DataSource", STRING, "UpdateFrequency", STRING, "Owner", STRING,
+					{
+					{"Total Transactions", "COUNTROWS(fact_transactions)", "fact_transactions", "On report republish", "Business Operations"},
+					{"Total Txn Amount", "SUM(fact_transactions[amount])", "fact_transactions", "On report republish", "Business Operations"},
+					{"Avg Txn Value", "AVERAGE(fact_transactions[amount])", "fact_transactions", "On report republish", "Business Operations"},
+					{"Success Rate", "Share of transactions where status = ""SUCCESS""", "fact_transactions", "On report republish", "Business Operations"},
+					{"Failed Rate", "Share of transactions where status = ""FAILED""", "fact_transactions", "On report republish", "Business Operations"},
+					{"Pending Rate", "Share of transactions where status = ""PENDING""", "fact_transactions", "On report republish", "Business Operations"},
+					{"Chargeback Count", "COUNTROWS(fact_chargebacks)", "fact_chargebacks", "On report republish", "Risk & Fraud Team"},
+					{"Chargeback Amount", "SUM(fact_chargebacks[disputed_amount])", "fact_chargebacks", "On report republish", "Risk & Fraud Team"},
+					{"CB to Txn Ratio", "DIVIDE([Chargeback Count], [Total Transactions])", "fact_chargebacks + fact_transactions", "On report republish", "Risk & Fraud Team"},
+					{"Avg Dispute Delay (Days)", "Average reporting_delay_days, restricted to chargebacks with logically valid timestamps", "fact_chargebacks", "On report republish", "Risk & Fraud Team"},
+					{"Disputes Reported After 7d", "Count of chargebacks where reporting_delay_days > 7", "fact_chargebacks", "On report republish", "Risk & Fraud Team"},
+					{"High Risk Merchants (2+ Disputes)", "Count of distinct merchants with 2 or more chargeback rows", "fact_chargebacks", "On report republish", "Risk & Fraud Team"},
+					{"Merchant-Day Spikes (2+ Txns)", "Count of merchant/day pairs with 2 or more transaction rows", "fact_transactions", "On report republish", "Risk & Fraud Team"},
+					{"KYC Completion Rate", "Share of customers where kyc_status = ""VERIFIED""", "dim_customers", "On report republish", "Compliance Team"},
+					{"KYC Rejection Rate", "Share of customers where kyc_status = ""REJECTED""", "dim_customers", "On report republish", "Compliance Team"},
+					{"Txn User FK Match Rate", "Share of transactions where user_id_valid_fk = TRUE", "fact_transactions + dim_customers", "On report republish", "Data Engineering"},
+					{"Txn Merchant FK Match Rate", "Share of transactions where merchant_id_valid_fk = TRUE", "fact_transactions + dim_merchants", "On report republish", "Data Engineering"},
+					{"Transactions Missing/Invalid UTR Rate", "Share of transactions with a missing or malformed UPI transaction reference", "fact_transactions", "On report republish", "Data Engineering"}
+					}
+				)
+
+	annotation PBI_ResultType = Table
+

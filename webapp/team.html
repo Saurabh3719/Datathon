@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Analytics of TransOrg</title>
+<script src="chart.umd.min.js"></script>
+<link rel="stylesheet" href="nav-bar.css" />
+<link rel="stylesheet" href="chat-widget.css" />
+<style>
+  :root {
+    --page:           #FBF7EF;
+    --surface-1:      #FFFFFF;
+    --surface-2:      #F5EEDD;
+    --surface-3:      #EDE2C9;
+    --border:         rgba(120, 90, 40, 0.10);
+    --border-strong:  rgba(120, 90, 40, 0.18);
+    --text-primary:   #17130E;
+    --text-secondary: #453B28;
+    --text-muted:     #A89876;
+    --accent:         #6366F1;
+    --accent-2:       #06B6D4;
+    --clove:          #92400E;
+    --clove-2:        #B45309;
+    --shadow-card:    0 4px 20px -6px rgba(60, 45, 20, 0.12);
+    --shadow-pop:     0 20px 48px -12px rgba(60, 45, 20, 0.22);
+    --radius:         18px;
+    --font-header:    'Times New Roman', Times, serif;
+    --font-content:   Arial, Helvetica, sans-serif;
+    --font-ui:        Arial, Helvetica, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; padding: 0; background: var(--page); color: var(--text-primary); font-family: var(--font-ui); }
+  h1, .brand strong, .p-name { font-family: var(--font-header); font-weight: 800; }
+  .hero p, .p-bio, .p-tagline { font-family: var(--font-content); font-size: 1em; line-height: 1.5; }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 48px 24px 100px; }
+
+  .hero { text-align: center; max-width: 720px; margin: 0 auto 40px; }
+  .clove-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, #FFF7ED, #FFEDD5);
+    border: 1px solid #FDE1B8; border-radius: 999px; padding: 10px 20px 10px 14px;
+    box-shadow: var(--shadow-card); margin-bottom: 20px;
+  }
+  .clove-badge span.tname { font-weight: 800; font-size: 16px; color: var(--clove); letter-spacing: -0.01em; }
+  .hero h1 { font-size: 28px; margin: 0 0 10px; letter-spacing: -0.02em; }
+  .hero p { color: var(--text-secondary); font-size: 14px; line-height: 1.7; margin: 0; }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 26px; margin-top: 48px;
+  }
+
+  .profile {
+    background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow-card); padding: 28px 24px 26px; text-align: center;
+    opacity: 0; will-change: transform, opacity;
+    transition: opacity 0.7s cubic-bezier(.22,1,.36,1), transform 0.7s cubic-bezier(.22,1,.36,1), box-shadow 0.3s ease;
+  }
+  .profile:hover { box-shadow: var(--shadow-pop); transform: translateY(-6px) !important; }
+
+  /* five distinct reveal styles */
+  .anim-up { transform: translateY(46px); }
+  .anim-up.revealed { opacity: 1; transform: translateY(0); }
+
+  .anim-left { transform: translateX(-60px) rotate(-3deg); }
+  .anim-left.revealed { opacity: 1; transform: translateX(0) rotate(0); }
+
+  .anim-right { transform: translateX(60px) rotate(3deg); }
+  .anim-right.revealed { opacity: 1; transform: translateX(0) rotate(0); }
+
+  .anim-zoom { transform: scale(0.78); }
+  .anim-zoom.revealed { opacity: 1; transform: scale(1); }
+
+  .anim-flip { transform: perspective(800px) rotateY(38deg) translateY(20px); }
+  .anim-flip.revealed { opacity: 1; transform: perspective(800px) rotateY(0) translateY(0); }
+
+  .avatar-wrap { position: relative; width: 108px; height: 108px; margin: 0 auto 16px; }
+  .avatar {
+    width: 108px; height: 108px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 800; color: #fff;
+    border: 4px solid var(--surface-1); box-shadow: 0 0 0 3px var(--ring, #6366F1), var(--shadow-card);
+  }
+  .avatar-badge {
+    position: absolute; bottom: -2px; right: -2px; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--surface-1); border: 2px solid var(--surface-2); box-shadow: var(--shadow-card);
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+  }
+
+  .p-name { font-size: 17px; font-weight: 800; margin: 2px 0 4px; letter-spacing: -0.01em; }
+  .p-nick {
+    display: inline-block; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--nick-fg, #4F46E5); background: var(--nick-bg, rgba(99,102,241,0.1));
+    padding: 4px 12px; border-radius: 999px; margin-bottom: 12px;
+  }
+  .p-tagline { font-size: 12.5px; font-style: italic; color: var(--text-secondary); margin: 4px 0 14px; line-height: 1.5; }
+
+  .p-meta { text-align: left; background: var(--surface-2); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; }
+  .p-meta-row { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; padding: 3px 0; }
+  .p-meta-row .k { color: var(--text-muted); font-weight: 600; }
+  .p-meta-row .v { color: var(--text-primary); font-weight: 600; text-align: right; }
+
+  .p-bio { font-size: 12.5px; color: var(--text-secondary); line-height: 1.65; text-align: left; }
+  .p-bio span.line { display: block; margin-bottom: 4px; }
+  .p-bio span.line::before { content: "\2022  "; color: var(--nick-fg, #6366F1); font-weight: 800; }
+
+  footer.page-foot { text-align: center; color: var(--text-muted); font-size: 12px; padding: 30px 24px; }
+  footer.page-foot a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+  @media (max-width: 640px) {
+    .nav-links a:not(.gh-link) span.label { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top-nav" id="siteNav" data-active="team"></nav>
+
+<main>
+  <div class="hero">
+    <div class="clove-badge">
+      <svg width="26" height="30" viewBox="0 0 26 30" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="13" cy="9" rx="6.2" ry="8.4" fill="#B45309"/>
+        <ellipse cx="13" cy="7.5" rx="4.4" ry="6" fill="#D97706"/>
+        <rect x="11" y="15" width="4" height="9" rx="1.6" fill="#92400E"/>
+        <path d="M13 24 L7 29 M13 24 L13 30 M13 24 L19 29" stroke="#78350F" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="tname">The Clove Mix</span>
+    </div>
+    <h1>Meet the team behind this project</h1>
+    <p>Five M.Tech engineers, one datathon, an unreasonable number of chai breaks. Scroll down -- every profile makes its own kind of entrance.</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1. Manudev Chiller -->
+    <div class="profile anim-up" style="--ring:#F59E0B; --nick-fg:#B45309; --nick-bg:rgba(245,158,11,0.14);">
+      <div class="avatar-wrap">
+        <div class="avatar" style="background:linear-gradient(135deg,#F59E0B,#B45309);">MC</div>
+        <div class="avatar-badge">&#128526;</div>
+      </div>
+      <div class="p-name">Manudev Chiller</div>
+      <div class="p-nick">Mr. Jatt</div>
+      <div class="p-tagline">"Big energy, bigger commits."</div>
+      <div class="p-meta">
+        <div class="p-meta-row"><span class="k">Branch</span><span class="v">M.Tech -- CSE</span></div>
+        <div class="p-meta-row"><span class="k">Department</span><span class="v">Dept. of CSE</span></div>
+        <div class="p-meta-row"><span class="k">Reg. No.</span><span class="v">24MT10001</span></div>
+      </div>
+      <div class="p-bio">
+        <span class="line">Enters the room, phone volume already at 100%.</span>
+        <span class="line">Treats every merge conflict like a family land dispute -- settles it loud, settles it fast.</span>
+        <span class="line">If the dashboard looks bold and larger-than-life, blame the Jatt in the team.</span>
+      </div>
+    </div>
+
+    <!-- 2. Saurav Tariyal -->
+    <div class="profile anim-left" style="--ring:#DC2626; --nick-fg:#B91C1C; --nick-bg:rgba(220,38,38,0.1);">
+      <div class="avatar-wrap">
+        <div class="avatar" style="background:linear-gradient(135deg,#F87171,#0EA5E9);">ST</div>
+        <div class="avatar-badge">&#127956;</div>
+      </div>
+      <div class="p-name">Saurav Tariyal</div>
+      <div class="p-nick">Desi Nepali Saurav</div>
+      <div class="p-tagline">"Compiles code and chai in equal measure."</div>
+      <div class="p-meta">
+        <div class="p-meta-row"><span class="k">Branch</span><span class="v">M.Tech -- Data Science</span></div>
+        <div class="p-meta-row"><span class="k">Department</span><span class="v">Dept. of CSE</span></div>
+        <div class="p-meta-row"><span class="k">Reg. No.</span><span class="v">24MT10002</span></div>
+      </div>
+      <div class="p-bio">
+        <span class="line">Half Indian spice, half Himalayan chill -- still deciding which momo counts as home-made.</span>
+        <span class="line">Debugs code the way he debates cricket: loudly, passionately, and usually right.</span>
+        <span class="line">Brings snacks to every stand-up; nobody has complained yet.</span>
+      </div>
+    </div>
+
+    <!-- 3. Guru Pratap Singh Rathod -->
+    <div class="profile anim-right" style="--ring:#6366F1; --nick-fg:#4338CA; --nick-bg:rgba(99,102,241,0.12);">
+      <div class="avatar-wrap">
+        <div class="avatar" style="background:linear-gradient(135deg,#818CF8,#6366F1);">GR</div>
+        <div class="avatar-badge">&#9889;</div>
+      </div>
+      <div class="p-name">Guru Pratap Singh Rathod</div>
+      <div class="p-nick">Guru Generate</div>
+      <div class="p-tagline">"Generating wisdom since npm install."</div>
+      <div class="p-meta">
+        <div class="p-meta-row"><span class="k">Branch</span><span class="v">M.Tech -- AI</span></div>
+        <div class="p-meta-row"><span class="k">Department</span><span class="v">Dept. of CSE</span></div>
+        <div class="p-meta-row"><span class="k">Reg. No.</span><span class="v">24MT10003</span></div>
+      </div>
+      <div class="p-bio">
+        <span class="line">Ask him anything -- he'll generate an answer, a diagram, and an unscheduled TED talk about it.</span>
+        <span class="line">The self-appointed guru of open Stack Overflow tabs and unsolicited advice.</span>
+        <span class="line">Once explained recursion so well he had to explain his own explanation.</span>
+      </div>
+    </div>
+
+    <!-- 4. Abhishek Mandal -->
+    <div class="profile anim-zoom" style="--ring:#92400E; --nick-fg:#92400E; --nick-bg:rgba(146,64,14,0.1);">
+      <div class="avatar-wrap">
+        <div class="avatar" style="background:linear-gradient(135deg,#B45309,#78350F);">AM</div>
+        <div class="avatar-badge">&#128220;</div>
+      </div>
+      <div class="p-name">Abhishek Mandal</div>
+      <div class="p-nick">The Ancient Piece</div>
+      <div class="p-tagline">"Old-school wisdom, new-school code."</div>
+      <div class="p-meta">
+        <div class="p-meta-row"><span class="k">Branch</span><span class="v">M.Tech -- CSE</span></div>
+        <div class="p-meta-row"><span class="k">Department</span><span class="v">Dept. of CSE</span></div>
+        <div class="p-meta-row"><span class="k">Reg. No.</span><span class="v">24MT10004</span></div>
+      </div>
+      <div class="p-bio">
+        <span class="line">Older than the codebase, wiser than the documentation.</span>
+        <span class="line">Speaks in proverbs, commits in riddles, reviews PRs like ancient scrolls.</span>
+        <span class="line">Legend says he once fixed a bug before it was written.</span>
+      </div>
+    </div>
+
+    <!-- 5. Pohap Kumar Lyle -->
+    <div class="profile anim-flip" style="--ring:#06B6D4; --nick-fg:#0E7490; --nick-bg:rgba(6,182,212,0.12);">
+      <div class="avatar-wrap">
+        <div class="avatar" style="background:linear-gradient(135deg,#67E8F9,#0891B2);">PL</div>
+        <div class="avatar-badge">&#128058;</div>
+      </div>
+      <div class="p-name">Pohap Kumar Lyle</div>
+      <div class="p-nick">The Himalayan Husky</div>
+      <div class="p-tagline">"Fetching bugs, not sticks."</div>
+      <div class="p-meta">
+        <div class="p-meta-row"><span class="k">Branch</span><span class="v">M.Tech -- IT</span></div>
+        <div class="p-meta-row"><span class="k">Department</span><span class="v">Dept. of CSE</span></div>
+        <div class="p-meta-row"><span class="k">Reg. No.</span><span class="v">24MT10005</span></div>
+      </div>
+      <div class="p-bio">
+        <span class="line">Loyal to the team, allergic to slow Wi-Fi, howls softly at every failed build.</span>
+        <span class="line">Runs on cold weather, warm coffee, and an unstoppable debugging instinct.</span>
+        <span class="line">Will fetch your pull request before you even ask.</span>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="page-foot">
+  The Clove Mix &middot; Built for the TransOrg AgentIQ Datathon &middot; <a href="https://github.com/Manudevchhiller/Datathon" target="_blank" rel="noopener">View source on GitHub</a>
+</footer>
+
+<script>
+  const cards = document.querySelectorAll(".profile");
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("revealed");
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.2, rootMargin: "0px 0px -40px 0px" });
+  cards.forEach((c, i) => {
+    c.style.transitionDelay = (i * 0.06) + "s";
+    io.observe(c);
+  });
+</script>
+<script>
+  window.CHAT_CONFIG = { API_BASE_URL: window.location.protocol + "//" + window.location.hostname + ":8000" };
+</script>
+<script src="nav-bar.js"></script>
+<script src="chat-widget.js"></script>
+</body>
+</html>
