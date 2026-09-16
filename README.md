@@ -74,7 +74,7 @@ The slides tell the story of the project, and the video shows the dashboard and 
 
 | | Resource | Link |
 |:-:|---|---|
-| 📊 | **Project presentation (PPT / PDF)** | [**View slides →**](#) <!-- TODO: replace # with your Google Slides / OneDrive / PDF link --> |
+| 📊 | **Project presentation (PPT / PDF)** | [**View slides →**](https://docs.google.com/presentation/d/1WP0qyo0mvQjtOP2ksuNNZaxsXaJApUfbroSxadYwnlY/edit?usp=sharing) <!-- TODO: replace # with your Google Slides / OneDrive / PDF link --> |
 | 🎥 | **Video explanation (full walkthrough)** | [**Watch video →**](#) <!-- TODO: replace # with your YouTube / Drive link --> |
 | ⚡ | **Short demo (chatbot in action)** | [**Watch demo →**](#) <!-- TODO: optional, remove the row if not needed --> |
 
