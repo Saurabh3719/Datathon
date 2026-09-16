@@ -36,7 +36,7 @@ We were given four deliberately messy synthetic files (transactions, KYC records
 
 1. **A cleaning pipeline** that turns the raw files into a clean star schema. It never drops a messy row just because it's messy.
 2. **A KPI engine** that calculates every business metric the brief asked for.
-3. **Two dashboards**: a fully offline HTML dashboard, and a native Power BI report with four pages.
+3. **Two dashboards**: a fully offline HTML dashboard, and a native Power BI report with five pages.
 4. **A text-to-SQL chatbot** that answers questions like *"Which merchant has the highest chargeback count?"* It runs a real, read-only SQL query and shows you the chart, the SQL and a short written answer.
 5. **A live deployment** on Oracle Cloud that puts the Power BI report and the chatbot on one web page.
 
@@ -94,38 +94,77 @@ The slides tell the story of the project, and the video shows the dashboard and 
 
 <div align="center">
 
-### 👉 [http://129.159.234.80/index.html](http://129.159.234.80/index.html)
+### 👉 [http://129.159.234.80](http://129.159.234.80/index.html)
+
+![Web app](https://img.shields.io/badge/Web_app-online-059669?style=flat-square)
+![Chatbot API](https://img.shields.io/badge/Chatbot_API-online-059669?style=flat-square)
+![Power BI](https://img.shields.io/badge/Power_BI_report-online-059669?style=flat-square)
+![LLM fallback](https://img.shields.io/badge/OpenRouter_fallback-enabled-6366F1?style=flat-square)
+
+<sub>All links below were checked on 16 September 2026.</sub>
 
 </div>
 
-The live web app has four pages. They share a navigation bar, and the chat assistant is available on every page:
+The live web app has four pages. They share a navigation bar, and the 💬 chat assistant is available on every page:
 
 | Page | What you'll find | Link |
 |---|---|---|
-| 📈 **Dashboard** | The embedded Power BI report and the "Ask the data" chatbot | [Open](http://129.159.234.80/index.html) |
-| 🔀 **Workflow** | Five animated diagrams that follow the data from the raw files to the chatbot | [Open](http://129.159.234.80/workflow.html) |
-| 👥 **Team** | The people behind the project | [Open](http://129.159.234.80/team.html) |
-| ℹ️ **Information** | Tips for reading the dashboard, the file structure and an FAQ | [Open](http://129.159.234.80/information.html) |
+| 📈 **Dashboard** | The embedded Power BI report and the "Ask the data" chatbot | [Open ↗](http://129.159.234.80/index.html) |
+| 🔀 **Workflow** | Five animated diagrams that follow the data from the raw files to the chatbot | [Open ↗](http://129.159.234.80/workflow.html) |
+| 👥 **Team** | The five people behind the project | [Open ↗](http://129.159.234.80/team.html) |
+| ℹ️ **Information** | Tips for reading the dashboard, the file structure and an FAQ | [Open ↗](http://129.159.234.80/information.html) |
+
+<details>
+<summary><b>🔀 Jump straight to a diagram on the Workflow page</b></summary>
+
+<br/>
+
+| Diagram | Link |
+|---|---|
+| Data cleaning: raw files to star schema | [workflow.html#cleaning](http://129.159.234.80/workflow.html#cleaning) |
+| KPI integration: star schema to metrics | [workflow.html#kpi](http://129.159.234.80/workflow.html#kpi) |
+| Dashboards & filters | [workflow.html#dashboards](http://129.159.234.80/workflow.html#dashboards) |
+| End-to-end architecture | [workflow.html#architecture](http://129.159.234.80/workflow.html#architecture) |
+| How the chatbot reads the data | [workflow.html#bot](http://129.159.234.80/workflow.html#bot) |
+
+</details>
 
 ### Platforms used
 
 | Platform | Role in the project | Link |
 |---|---|---|
 | <img src="https://img.shields.io/badge/-Oracle_Cloud-F80000?logo=oracle&logoColor=white"/> | A compute instance hosts the web app (port 80) and the FastAPI chatbot backend (port 8000) | [Live app](http://129.159.234.80/index.html) · [OCI](https://www.oracle.com/cloud/) |
-| <img src="https://img.shields.io/badge/-Power_BI_Service-F2C811?logo=powerbi&logoColor=black"/> | The report is shared with *Publish to web* and embedded in the dashboard page | [Public report](https://app.powerbi.com/view?r=eyJrIjoiMTI5ZGU2MzMtM2FhYS00NDZlLWJkNmYtOTJmOGVhMWExMjUzIiwidCI6ImUxNGU3M2ViLTUyNTEtNDM4OC04ZDY3LThmOWYyZTJkNWE0NiIsImMiOjEwfQ%3D%3D) |
-| <img src="https://img.shields.io/badge/-OpenRouter-6566F1"/> | Optional LLM gateway (default model `openai/gpt-4o-mini`) for questions the local templates don't cover | [openrouter.ai](https://openrouter.ai) |
-| <img src="https://img.shields.io/badge/-GitHub-181717?logo=github&logoColor=white"/> | Source code, cleaned data, reports and the Power BI project | [Repository](https://github.com/Saurabh3719/Datathon) |
+| <img src="https://img.shields.io/badge/-Power_BI_Service-F2C811?logo=powerbi&logoColor=black"/> | The report *UPI Transaction Anomaly & Risk Intelligence* is shared with *Publish to web* and embedded in the dashboard page | [Public report ↗](https://app.powerbi.com/view?r=eyJrIjoiMTI5ZGU2MzMtM2FhYS00NDZlLWJkNmYtOTJmOGVhMWExMjUzIiwidCI6ImUxNGU3M2ViLTUyNTEtNDM4OC04ZDY3LThmOWYyZTJkNWE0NiIsImMiOjEwfQ%3D%3D) |
+| <img src="https://img.shields.io/badge/-OpenRouter-6566F1"/> | LLM gateway (`openai/gpt-4o-mini`) for questions the local templates don't cover. It's switched on in the live deployment. | [openrouter.ai](https://openrouter.ai) |
+| <img src="https://img.shields.io/badge/-GitHub-181717?logo=github&logoColor=white"/> | Source code, cleaned data, reports and the Power BI project | [Repository ↗](https://github.com/Saurabh3719/Datathon) |
 
-### Chatbot API endpoints
+### Chatbot API
+
+The live API is at **`http://129.159.234.80:8000`**. FastAPI generates interactive docs automatically, so you can try every endpoint from your browser:
+
+<div align="center">
+
+[![Swagger UI](https://img.shields.io/badge/Try_it-Swagger_UI-85EA2D?style=for-the-badge&logo=swagger&logoColor=black)](http://129.159.234.80:8000/docs)
+[![ReDoc](https://img.shields.io/badge/Read-ReDoc-8CA1AF?style=for-the-badge&logo=readthedocs&logoColor=white)](http://129.159.234.80:8000/redoc)
+
+</div>
 
 | Method | Endpoint | Purpose |
 |:-:|---|---|
-| `POST` | [`/ask`](http://129.159.234.80:8000/ask) | Send `{"question": "..."}` and get back the SQL, the rows, a chart spec and a written answer |
+| `POST` | `/ask` | Send `{"question": "..."}` and get back the SQL, the rows, a chart spec and a written answer. It only accepts POST, so use the chat widget, Swagger or curl. |
 | `GET` | [`/health`](http://129.159.234.80:8000/health) | Health check (drives the green "agent online" dot in the navigation bar) |
 | `GET` | [`/examples`](http://129.159.234.80:8000/examples) | The list of supported example questions |
+| `GET` | [`/openapi.json`](http://129.159.234.80:8000/openapi.json) | The machine-readable API schema |
+
+```bash
+curl -s -X POST http://129.159.234.80:8000/ask \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Which merchant has the highest chargeback count?"}'
+# → "Mukhopadhyay, Dua and Dada (MCH9291) has the highest chargeback count, with 42 disputes."
+```
 
 > [!NOTE]
-> The site runs on a single cloud VM over plain HTTP. If a link doesn't load, the instance may be restarting. The Power BI report link above still works on its own.
+> The site runs on a single cloud VM over plain HTTP, so use the exact page links above. Short paths such as `/team` return a 404, so include `.html`. If the VM is restarting, the Power BI report link still works on its own.
 
 ---
 
@@ -152,7 +191,7 @@ flowchart LR
     J --> H["🖥️ Offline HTML dashboard"]
 
     S --> PB["build_powerbi_project.py"]
-    PB --> PBI["📊 Power BI report<br/>(4 pages, DAX)"]
+    PB --> PBI["📊 Power BI report<br/>(5 pages, DAX)"]
 
     S --> DB["build_db.py"]
     DB --> SQL[("🗄️ analytics.db<br/>SQLite")]
@@ -391,9 +430,9 @@ We built two versions of the dashboard, each for a different situation.
 </td>
 <td>
 
-- `powerbi/UPI_Fraud_Analytics.pbip`: a native Power BI project generated from code as TMDL and JSON.
-- Four pages, 38 DAX measures and filter panels scoped to each page.
-- Published to the web and embedded in the live app.
+- `powerbi/UPI_Fraud_Analytics.pbip`: a native Power BI project, published as **UPI Transaction Anomaly & Risk Intelligence** generated from code as TMDL and JSON.
+- Five pages (four analysis pages plus a KPI Reference page), 38 DAX measures and filter panels scoped to each page.
+- Published to the web and embedded in the live app. [**Open the report ↗**](https://app.powerbi.com/view?r=eyJrIjoiMTI5ZGU2MzMtM2FhYS00NDZlLWJkNmYtOTJmOGVhMWExMjUzIiwidCI6ImUxNGU3M2ViLTUyNTEtNDM4OC04ZDY3LThmOWYyZTJkNWE0NiIsImMiOjEwfQ%3D%3D)
 
 </td>
 </tr>
@@ -410,6 +449,7 @@ We built two versions of the dashboard, each for a different situation.
 | **2 · Fraud & Disputes** | CB amount, CB ratio, avg. delay, disputes after 7 days | Reason donut, severity donut, CB ratio by category, top merchants table | Delay bucket, valid timestamps, resolution status, channel |
 | **3 · Customer Risk & Data Quality** | KYC completion and rejection, KYC and merchant match rates | KYC donut, transactions by state (drill down to city), users by chargebacks | KYC status, risk segment, customer dispute risk, spike day |
 | **4 · Fraud-Ring Spotlight** | Pending, failed, avg. value, UTR issues, high-risk merchants, spike days | Top merchants by disputed amount, same-day spike table | Category, merchant status, merchant dispute risk, spike day |
+| **5 · KPI Reference** | n/a | A dictionary of every KPI and what it means, plus FAQ references | n/a |
 
 The **Date** and **Merchant Category** filters apply to every page.
 
@@ -694,7 +734,7 @@ This is how the [live app](http://129.159.234.80/index.html) was set up. The ful
 
 ```mermaid
 flowchart LR
-    B["👤 Browser"] -->|":80"| WS["Static web server<br/>webapp/*.html"]
+    B["👤 Browser"] -->|":80"| WS["Python static server<br/>webapp/*.html"]
     WS -.->|"iframe"| PBI["Power BI Service<br/>Publish to web"]
     B -->|":8000 /ask"| UV["Uvicorn + FastAPI"]
     UV --> DB[("analytics.db")]
@@ -706,15 +746,19 @@ flowchart LR
     end
 ```
 
-1. Copy the `agent/` folder and `data/cleaned/` to the instance, for example into `/opt/upi-agent/`.
+1. Copy the `agent/` folder and `data/cleaned/` to the instance, for example into `/opt/upi-analytics/` (the path the live instance uses).
 2. Install Python 3.10+, run `pip install -r requirements.txt`, then run `python3 agent/build_db.py`.
-3. *(Optional)* Add `OPENROUTER_API_KEY` to `.env`.
+3. Add `OPENROUTER_API_KEY` to `.env`. This is optional, but the live instance has it set, so questions outside the templates still get answered.
 4. Start the API on all network interfaces:
    ```bash
    python3 -m uvicorn agent.app:app --host 0.0.0.0 --port 8000
    ```
 5. Open **ports 80 and 8000** in the OCI security list and in the operating system's firewall.
-6. Serve `webapp/` on port 80. The chat widget finds the API automatically at `http://<same-host>:8000`.
+6. Serve `webapp/` on port 80. The live instance uses Python's built-in static server:
+   ```bash
+   cd webapp && sudo python3 -m http.server 80
+   ```
+   The chat widget finds the API automatically at `http://<same-host>:8000`.
 7. In Power BI Desktop, publish the report, then choose **File → Embed report → Publish to web**. Paste the link into `POWERBI_EMBED_URL` in `webapp/index.html`.
 
 > [!WARNING]
@@ -728,13 +772,17 @@ flowchart LR
 
 **The Clove Mix**: five M.Tech engineers, one datathon and a lot of chai breaks.
 
-| Member | Branch |
-|---|---|
-| Manudev Chiller | M.Tech, CSE |
-| Saurav Tariyal | M.Tech, Data Science |
-| Guru Pratap Singh Rathod | M.Tech, AI |
-| Abhishek Mandal | M.Tech, CSE |
-| Pohap Kumar Lyle | M.Tech, IT |
+<table>
+<tr>
+<td align="center" width="20%"><h1>😎</h1><b>Manu Dev Chhiller</b><br/><sub><i>Mr. Jatt</i></sub><br/><sub>M.Tech, Data Science</sub><br/><sub><i>"Big energy, bigger commits."</i></sub></td>
+<td align="center" width="20%"><h1>🏔</h1><b>Saurabh Tariyal</b><br/><sub><i>Desi Nepali Saurav</i></sub><br/><sub>M.Tech, Data Science</sub><br/><sub><i>"Compiles code and chai in equal measure."</i></sub></td>
+<td align="center" width="20%"><h1>⚡</h1><b>Gurupratap Singh Rathore</b><br/><sub><i>Guru Generate</i></sub><br/><sub>M.Tech, AI</sub><br/><sub><i>"Generating wisdom since npm install."</i></sub></td>
+<td align="center" width="20%"><h1>📜</h1><b>Abhishek Mondal</b><br/><sub><i>The Ancient Piece</i></sub><br/><sub>M.Tech, Data Science</sub><br/><sub><i>"Old-school wisdom, new-school code."</i></sub></td>
+<td align="center" width="20%"><h1>🐺</h1><b>Pohap Singh Layal</b><br/><sub><i>The Himalayan Husky</i></sub><br/><sub>M.Tech, Data Science</sub><br/><sub><i>"Fetching bugs, not sticks."</i></sub></td>
+</tr>
+</table>
+
+<sub>School of Computing and AI</sub>
 
 Meet the team properly on the **[Team page →](http://129.159.234.80/team.html)**
 
